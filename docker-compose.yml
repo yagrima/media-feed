@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mefeed_db
+    environment:
+      POSTGRES_DB: mefeed
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_user
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/db_user)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: mefeed_redis
+    command: redis-server --requirepass $$(cat /run/secrets/redis_password)
+    secrets:
+      - redis_password
+    networks:
+      - backend-network
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mefeed_backend
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://$$(cat /run/secrets/db_user):$$(cat /run/secrets/db_password)@db:5432/mefeed
+      REDIS_URL: redis://:$$(cat /run/secrets/redis_password)@redis:6379
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt_private_key
+      JWT_PUBLIC_KEY_PATH: /run/secrets/jwt_public_key
+      ENCRYPTION_KEY_PATH: /run/secrets/encryption_key
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DEBUG: ${DEBUG:-false}
+    secrets:
+      - db_user
+      - db_password
+      - redis_password
+      - jwt_private_key
+      - jwt_public_key
+      - encryption_key
+    ports:
+      - "8000:8000"
+    networks:
+      - backend-network
+      - frontend-network
+    volumes:
+      - ./backend:/app:ro
+    user: "1000:1000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mefeed_celery
+    command: celery -A app.workers worker --loglevel=info
+    depends_on:
+      - redis
+      - db
+    environment:
+      DATABASE_URL: postgresql://$$(cat /run/secrets/db_user):$$(cat /run/secrets/db_password)@db:5432/mefeed
+      REDIS_URL: redis://:$$(cat /run/secrets/redis_password)@redis:6379
+      ENCRYPTION_KEY_PATH: /run/secrets/encryption_key
+    secrets:
+      - db_user
+      - db_password
+      - redis_password
+      - encryption_key
+    networks:
+      - backend-network
+    volumes:
+      - ./backend:/app:ro
+    user: "1000:1000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mefeed_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NODE_ENV: production
+    networks:
+      - frontend-network
+    user: "1000:1000"
+    restart: unless-stopped
+
+secrets:
+  db_user:
+    file: ./secrets/db_user.txt
+  db_password:
+    file: ./secrets/db_password.txt
+  redis_password:
+    file: ./secrets/redis_password.txt
+  jwt_private_key:
+    file: ./secrets/jwt_private.pem
+  jwt_public_key:
+    file: ./secrets/jwt_public.pem
+  encryption_key:
+    file: ./secrets/encryption.key
+
+networks:
+  backend-network:
+    driver: bridge
+    internal: true
+  frontend-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
