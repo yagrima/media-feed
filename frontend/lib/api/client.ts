@@ -4,7 +4,7 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { tokenManager } from '@/lib/auth/token-manager'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -70,30 +70,53 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Show toast notifications for errors (except 401 which is handled above)
+    // Show toast notifications for errors (with long duration for debugging)
     if (error.response && error.response.status !== 401) {
       const errorMessage = error.response.data?.detail || error.response.data?.message || 'An error occurred'
 
-      // Don't show toast for expected validation errors (let components handle them)
-      const silentErrors = ['/api/auth/login', '/api/auth/register']
-      const isSilent = originalRequest.url && silentErrors.some(path => originalRequest.url?.includes(path))
+      // Special handling for auth errors - always show login/register errors
+      const authErrors = ['/api/auth/login', '/api/auth/register']
+      const isAuthError = originalRequest.url && authErrors.some(path => originalRequest.url?.includes(path))
 
-      if (!isSilent) {
-        if (error.response.status === 403) {
-          toast.error('Access denied', { description: errorMessage })
-        } else if (error.response.status === 404) {
-          toast.error('Not found', { description: errorMessage })
-        } else if (error.response.status === 429) {
-          toast.error('Too many requests', { description: 'Please slow down and try again later' })
-        } else if (error.response.status >= 500) {
-          toast.error('Server error', { description: 'Something went wrong. Please try again later.' })
-        } else if (error.response.status >= 400) {
-          toast.error('Request failed', { description: errorMessage })
+      // Always show errors for debugging with extended duration
+      console.log('🔍 Toast Debug - Error:', error.response?.status, errorMessage)
+      
+      // React Hot Toast implementation - clean and stable
+      const message = isAuthError 
+        ? error.response.status === 404 && errorMessage.includes('No account found')
+          ? `Account Not Found: No account exists with this email address. Please register for a new account.`
+          : error.response.status === 401 
+          ? `Incorrect Password: The password you entered is incorrect. Please try again.`
+          : `Login Failed: ${errorMessage}`
+        : `Error (${error.response.status}): ${errorMessage}`
+      
+      console.log('🔥 React Hot Toast - Error:', error.response?.status, message)
+      toast.error(message, {
+        duration: 30000, // 30 seconds - plenty of time to read
+        position: 'top-center',
+        style: {
+          background: '#ff6b6b',
+          color: '#fff',
+          fontSize: '16px',
+          border: '2px solid #ff3333',
+          borderRadius: '8px',
+          boxShadow: '0 4px 20px rgba(255, 107, 107, 0.5)',
         }
-      }
+      })
+      
     } else if (error.request) {
-      // Network error
-      toast.error('Network error', { description: 'Unable to reach the server. Please check your connection.' })
+      // Network error with React Hot Toast
+      const message = 'Network Error: Unable to reach the server. Please check your connection.'
+      console.log('🔥 React Hot Toast - Network Error:', message)
+      toast.error(message, {
+        duration: 30000,
+        position: 'top-center',
+        style: {
+          background: '#ff9500',
+          color: '#fff',
+          border: '2px solid #ff7700',
+        }
+      })
     }
 
     return Promise.reject(error)

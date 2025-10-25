@@ -1,5 +1,7 @@
-import { ProtectedRoute } from '@/components/auth/protected-route'
+'use client'
+
 import { Navbar } from '@/components/layout/navbar'
+import { ProtectedRoute } from '@/components/auth/protected-route'
 
 export default function DashboardLayout({
   children,
@@ -10,7 +12,7 @@ export default function DashboardLayout({
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-6">
           {children}
         </main>
       </div>

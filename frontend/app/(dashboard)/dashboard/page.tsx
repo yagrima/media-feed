@@ -7,18 +7,18 @@ import { Upload, Film } from 'lucide-react'
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Library</h1>
+          <h1 className="text-3xl font-bold">Meine Mediathek</h1>
           <p className="text-muted-foreground mt-1">
-            Track your media consumption and get sequel notifications
+            Verfolge deine Medienkonsumtion und erhalte Fortsetzungs-Benachrichtigungen
           </p>
         </div>
-        <Link href="/dashboard/import">
+        <Link href="/import">
           <Button>
             <Upload className="mr-2 h-4 w-4" />
-            Import CSV
+            CSV importieren
           </Button>
         </Link>
       </div>
@@ -27,16 +27,10 @@ export default function DashboardPage() {
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-16">
           <Film className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No media yet</h3>
-          <p className="text-muted-foreground text-center mb-6 max-w-md">
-            Upload your Netflix viewing history CSV to get started tracking your media consumption
+          <h3 className="text-lg font-semibold mb-2">Noch keine Medien vorhanden</h3>
+          <p className="text-muted-foreground text-center max-w-md">
+            Verwende den Button "CSV importieren" oben, um deine Netflix Verlaufs-CSV-Datei hochzuladen und deine Medienkonsumtion zu verfolgen.
           </p>
-          <Link href="/dashboard/import">
-            <Button>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload your first CSV
-            </Button>
-          </Link>
         </CardContent>
       </Card>
     </div>

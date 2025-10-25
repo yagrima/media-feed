@@ -77,7 +77,11 @@ class AuthService:
         user = result.scalar_one_or_none()
 
         if not user:
-            return None
+            # Create specific error for non-existent user
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No account found"
+            )
 
         # Check if account is locked
         if user.locked_until and user.locked_until > datetime.utcnow():

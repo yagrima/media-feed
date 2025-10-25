@@ -1,24 +1,25 @@
 """
 Configuration loader for sensitive values
-Loads configuration from config/secrets.json file
+Loads configuration from config/secrets.json file and separate key files
 """
 
 import json
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 class ConfigLoader:
-    """Loads configuration from JSON file with environment fallbacks"""
+    """Loads configuration from JSON file with environment fallbacks and file references"""
     
     def __init__(self, config_path: str = None):
         if config_path is None:
             # Default to config/secrets.json relative to project root
-            project_root = Path(__file__).parent.parent.parent.parent.parent
+            project_root = Path(__file__).parent.parent.parent.parent
             config_path = project_root / "config" / "secrets.json"
         
         self.config_path = Path(config_path)
+        self.project_root = self.config_path.parent.parent
         self._config = {}
         self.load_config()
     
@@ -28,12 +29,39 @@ class ConfigLoader:
             if self.config_path.exists():
                 with open(self.config_path, 'r') as f:
                     self._config = json.load(f)
+                print(f"Configuration loaded from {self.config_path}")
             else:
                 print(f"Warning: Config file not found at {self.config_path}")
                 self._config = {}
         except Exception as e:
             print(f"Error loading config: {e}")
             self._config = {}
+    
+    def _resolve_file_path(self, file_path: str) -> Path:
+        """Resolve file paths relative to config file location"""
+        if not file_path:
+            return None
+        
+        # Handle relative paths (starting with ../)
+        if file_path.startswith('../'):
+            return self.config_path.parent.parent / file_path[3:]
+        elif file_path.startswith('./'):
+            return self.config_path.parent / file_path[2:]
+        elif not Path(file_path).is_absolute():
+            return self.project_root / file_path
+        else:
+            return Path(file_path)
+    
+    def _read_file_content(self, file_path: str, encoding: str = 'utf-8') -> Optional[str]:
+        """Read content from a file referenced in configuration"""
+        resolved_path = self._resolve_file_path(file_path)
+        if resolved_path and resolved_path.exists():
+            try:
+                with open(resolved_path, 'r', encoding=encoding) as f:
+                    return f.read().strip()
+            except Exception as e:
+                print(f"Error reading file {resolved_path}: {e}")
+        return None
     
     def get(self, key_path: str, default: Any = None) -> Any:
         """
@@ -86,11 +114,29 @@ class ConfigLoader:
         }
     
     def get_jwt_config(self) -> Dict[str, str]:
-        """Get JWT configuration"""
+        """Get JWT configuration with file paths resolved"""
+        private_key_file = self.get('jwt.private_key_file')
+        public_key_file = self.get('jwt.public_key_file')
+        
         return {
-            'private_key_path': self.get('jwt.private_key_path'),
-            'public_key_path': self.get('jwt.public_key_path')
+            'private_key_path': str(self._resolve_file_path(private_key_file)) if private_key_file else None,
+            'public_key_path': str(self._resolve_file_path(public_key_file)) if public_key_file else None
         }
+    
+    def get_jwt_private_key(self) -> Optional[str]:
+        """Get JWT private key content directly"""
+        private_key_file = self.get('jwt.private_key_file')
+        return self._read_file_content(private_key_file)
+    
+    def get_jwt_public_key(self) -> Optional[str]:
+        """Get JWT public key content directly"""
+        public_key_file = self.get('jwt.public_key_file')
+        return self._read_file_content(public_key_file)
+    
+    def get_encryption_key(self) -> Optional[str]:
+        """Get encryption key content directly"""
+        encryption_key_file = self.get('security.encryption_key_file')
+        return self._read_file_content(encryption_key_file)
     
     def get_smtp_config(self) -> Dict[str, str]:
         """Get SMTP configuration"""
@@ -100,6 +146,10 @@ class ConfigLoader:
             'host': self.get('smtp.host'),
             'port': self.get('smtp.port')
         }
+    
+    def get_secret_key(self) -> str:
+        """Get the application secret key"""
+        return self.get('security.secret_key', 'dev_secret_key_change_in_production')
 
 
 # Global config instance

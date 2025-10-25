@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import Link from 'next/link'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -48,8 +48,9 @@ export default function LoginPage() {
       toast.success('Login successful!')
       router.push('/dashboard')
     } catch (error: any) {
-      const message = error.response?.data?.detail || 'Login failed. Please try again.'
-      toast.error(message)
+      // Error handling is done in the API client interceptor
+      // to ensure consistent toast display and duration
+      console.error('Login error:', error)
     } finally {
       setIsLoading(false)
     }

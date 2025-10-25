@@ -1,0 +1,22 @@
+{{ app_name }}
+================================================================================
+
+Hi {{ user_name }},
+
+Good news! We found a sequel to content you've watched:
+
+NEW SEQUEL: {{ sequel_title }}
+
+Original: {{ original_title }}
+{% if platform %}Platform: {{ platform }}{% endif %}
+{% if release_date %}Released: {{ release_date }}{% endif %}
+
+View in {{ app_name }}:
+{{ allowed_origins_list[0] if allowed_origins_list else 'Visit the app' }}
+
+================================================================================
+
+You're receiving this because you've enabled sequel notifications in {{ app_name }}.
+{% if unsubscribe_url %}
+Unsubscribe: {{ unsubscribe_url }}
+{% endif %}

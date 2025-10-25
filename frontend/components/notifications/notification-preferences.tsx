@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { notificationsApi, NotificationPreferences } from '@/lib/api/notifications'
+import { notificationsApi, type NotificationPreferences } from '@/lib/api/notifications'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'

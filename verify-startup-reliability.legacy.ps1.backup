@@ -1,0 +1,72 @@
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+    Automated startup reliability verification for Me Feed
+.DESCRIPTION
+    Tests startup reliability multiple times to ensure it never fails
+#>
+
+$ErrorActionPreference = "Stop"
+$testCount = 5
+$successCount = 0
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Startup Reliability Verification" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+
+Write-Host "Running $testCount startup tests to verify reliability..." -ForegroundColor Yellow
+
+for ($i = 1; $i -le $testCount; $i++) {
+    Write-Host "`nTest ${i}/${testCount}:" -ForegroundColor Cyan
+    
+    try {
+        # Stop any existing services
+        .\stop-bulletproof.ps1
+        Start-Sleep -Seconds 2
+        
+        # Start services
+        $success = .\start-bulletproof.ps1 >$null 2>&1
+        
+        if ($success) {
+            # Quick health check
+            $frontendTest = try { Invoke-WebRequest http://localhost:3000 -TimeoutSec 5; $true } catch { $false }
+            $backendTest = try { Invoke-WebRequest http://localhost:8000/health -TimeoutSec 5; $true } catch { $false }
+            
+            if ($frontendTest -and $backendTest) {
+                $successCount++
+                Write-Host "  Test ${i}: SUCCESS" -ForegroundColor Green
+            } else {
+                Write-Host "  Test ${i}: FAILED (health check)" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "  Test ${i}: FAILED (startup)" -ForegroundColor Red
+        }
+        
+        # Cleanup
+        .\stop-bulletproof.ps1
+        Start-Sleep -Seconds 3
+        
+    } catch {
+        Write-Host "  Test ${i}: FAILED (error: $_)" -ForegroundColor Red
+        .\stop-bulletproof.ps1
+    }
+}
+
+# Calculate reliability
+$reliability = [math]::Round(($successCount / $testCount) * 100, 1)
+
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "Reliability Test Results" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Success Rate: $successCount/$testCount tests ($reliability%)" -ForegroundColor $(if ($reliability -ge 90) { "Green" } elseif ($reliability -ge 70) { "Yellow" } else { "Red" })
+
+if ($reliability -ge 90) {
+    Write-Host "CONCLUSION: Startup system is RELIABLE and ready for production use!" -ForegroundColor Green
+    exit 0
+} elseif ($reliability -ge 70) {
+    Write-Host "CONCLUSION: Startup system needs minor improvements." -ForegroundColor Yellow
+    exit 1
+} else {
+    Write-Host "CONCLUSION: Startup system requires significant improvements." -ForegroundColor Red
+    exit 2
+}

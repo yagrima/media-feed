@@ -23,10 +23,15 @@ apiClient.interceptors.request.use(
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('No access token found, request may fail')
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request interceptor error:', error)
+    return Promise.reject(error)
+  }
 );
 
 // Response interceptor for token refresh

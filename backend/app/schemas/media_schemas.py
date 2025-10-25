@@ -19,7 +19,7 @@ class MediaBase(BaseModel):
     """Base media schema"""
     title: str
     type: str
-    platform: str
+    platform: Optional[str] = None
     base_title: Optional[str] = None
     season_number: Optional[int] = None
 

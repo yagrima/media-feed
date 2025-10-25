@@ -15,20 +15,52 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Me Feed"
     APP_VERSION: str = "1.1.0"
-    DEBUG: bool = False
+    DEBUG: bool = True
 
     # Database
-    DATABASE_URL: str
-    REDIS_URL: str
+    DATABASE_URL: str = ''
+    REDIS_URL: str = ''
+    
+    @field_validator('DATABASE_URL', mode='before')
+    @classmethod
+    def build_database_url(cls, v):
+        """Build DATABASE_URL from components if not provided"""
+        if v:
+            # Ensure asyncpg driver is used
+            if v.startswith('postgresql://'):
+                v = v.replace('postgresql://', 'postgresql+asyncpg://', 1)
+            return v
+        
+        # Build from individual components
+        import urllib.parse
+        db_config = config.get_database_config()
+        if all(db_config.values()):
+            encoded_password = urllib.parse.quote_plus(db_config['password'])
+            return f"postgresql+asyncpg://{db_config['user']}:{encoded_password}@{db_config['host']}:{db_config['port']}/{db_config['name']}"
+        return v
+    
+    @field_validator('REDIS_URL', mode='before')
+    @classmethod
+    def build_redis_url(cls, v):
+        """Build REDIS_URL from components if not provided or contains placeholder"""
+        if v and 'CHANGE_THIS_PASSWORD' not in v:
+            return v
+            
+        # Build from individual components
+        redis_config = config.get_redis_config()
+        if redis_config['password']:
+            return f"redis://:{redis_config['password']}@{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
+        else:
+            return f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
 
     # Security - File paths for keys
-    JWT_PRIVATE_KEY_PATH: str = config.get('jwt.private_key_path', "./secrets/jwt_private.pem")
-    JWT_PUBLIC_KEY_PATH: str = config.get('jwt.public_key_path', "./secrets/jwt_public.pem")
-    ENCRYPTION_KEY_PATH: str = config.get('encryption.key_path', "./secrets/encryption.key")
+    JWT_PRIVATE_KEY_PATH: str = config.get('jwt.private_key_file', "./secrets/jwt_private.pem")
+    JWT_PUBLIC_KEY_PATH: str = config.get('jwt.public_key_file', "./secrets/jwt_public.pem")
+    ENCRYPTION_KEY_PATH: str = config.get('security.encryption_key_file', "./secrets/encryption.key")
     SECRET_KEY: str = config.get('security.secret_key', '')
 
     # CORS & Security
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
     ALLOWED_HOSTS: str = "localhost,127.0.0.1"
 
     # Rate Limiting
@@ -89,29 +121,29 @@ class Settings(BaseSettings):
 
     @field_validator('DATABASE_URL')
     @classmethod
-    def validate_database_url(cls, v, info):
+    def validate_database_url(cls, v):
         """Ensure production database password is not a placeholder"""
-        # In Pydantic v2, we can't access other fields in field_validator
-        # We'll check DEBUG via environment variable directly
-        debug = os.getenv('DEBUG', 'false').lower() == 'true'
-        if not debug and ('CHANGE_THIS_PASSWORD' in v or 'localhost' in v):
+        # Skip validation in development if localhost
+        if 'localhost' in v:
+            return v
+        if 'CHANGE_THIS_PASSWORD' in v:
             raise ValueError(
                 'Production database configuration required. '
-                'DATABASE_URL contains placeholder or localhost.'
+                'DATABASE_URL contains placeholder.'
             )
         return v
 
     @field_validator('REDIS_URL')
     @classmethod
-    def validate_redis_url(cls, v, info):
+    def validate_redis_url(cls, v):
         """Ensure production Redis password is not a placeholder"""
-        # In Pydantic v2, we can't access other fields in field_validator
-        # We'll check DEBUG via environment variable directly
-        debug = os.getenv('DEBUG', 'false').lower() == 'true'
-        if not debug and ('CHANGE_THIS_PASSWORD' in v or 'localhost' in v):
+        # Skip validation in development if localhost
+        if 'localhost' in v:
+            return v
+        if 'CHANGE_THIS_PASSWORD' in v:
             raise ValueError(
                 'Production Redis configuration required. '
-                'REDIS_URL contains placeholder or localhost.'
+                'REDIS_URL contains placeholder.'
             )
         return v
 

@@ -31,7 +31,7 @@ router = APIRouter(prefix="/import", tags=["import"])
     status_code=status.HTTP_202_ACCEPTED,
     summary="Upload CSV file for import"
 )
-@limiter.limit("5/hour")
+@limiter.limit("100/hour")  # Temporarily increased for testing
 async def upload_csv(
     request: Request,
     file: UploadFile = File(...),
@@ -84,15 +84,29 @@ async def upload_csv(
         filename=file.filename
     )
 
-    # Queue background processing (will be implemented with Celery)
-    # For now, we'll process synchronously in development
-    # TODO: Replace with Celery task
-    # process_csv_import.delay(job.id)
-
+    # Start background processing task
+    # Create a new task that will run independently
+    import asyncio
+    
+    async def process_in_background():
+        """Process CSV in background with its own DB session"""
+        async for bg_db in get_db():
+            try:
+                bg_import_service = ImportService(bg_db)
+                await bg_import_service.process_csv_import(job.id, content)
+            except Exception as e:
+                print(f"Background processing error: {e}")
+            finally:
+                await bg_db.close()
+                break
+    
+    # Fire and forget - start processing
+    asyncio.create_task(process_in_background())
+    
     return CSVUploadResponse(
         job_id=job.id,
         message="CSV upload accepted for processing",
-        status=ImportStatus.PENDING,
+        status=ImportStatus.PROCESSING,
         estimated_rows=row_count
     )
 

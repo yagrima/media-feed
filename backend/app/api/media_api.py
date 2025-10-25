@@ -3,8 +3,10 @@ Media API Endpoints
 Handles user media library operations
 """
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session, joinedload
+from fastapi import APIRouter, Depends, Query, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+from sqlalchemy import select, func
 from typing import List, Optional
 from uuid import UUID
 
@@ -17,7 +19,18 @@ from app.schemas.media_schemas import (
     MediaType,
 )
 
-router = APIRouter(prefix="/api/user", tags=["media"])
+router = APIRouter(prefix="/api", tags=["media"])
+
+
+@router.get("/media-test")
+async def test_media_endpoint():
+    """
+    Simple test endpoint without auth or database
+    """
+    return {
+        "test": "ok",
+        "message": "Media API is reachable"
+    }
 
 
 @router.get("/media", response_model=UserMediaListResponse)
@@ -26,7 +39,7 @@ async def get_user_media(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Get user's media library with optional filtering
@@ -35,23 +48,36 @@ async def get_user_media(
     - **page**: Page number (default: 1)
     - **limit**: Items per page (default: 20, max: 100)
     """
-    # Build query
-    query = (
-        db.query(UserMedia)
+    # Build base statement
+    stmt = (
+        select(UserMedia)
         .options(joinedload(UserMedia.media))
-        .filter(UserMedia.user_id == current_user.id)
+        .where(UserMedia.user_id == current_user.id)
+    )
+
+    # Build count statement
+    count_stmt = (
+        select(func.count())
+        .select_from(UserMedia)
+        .where(UserMedia.user_id == current_user.id)
     )
 
     # Apply type filter if provided
     if type:
-        query = query.join(Media).filter(Media.type == type.value)
+        stmt = stmt.join(Media).where(Media.type == type.value)
+        count_stmt = count_stmt.join(Media).where(Media.type == type.value)
 
-    # Get total count before pagination
-    total = query.count()
+    # Get total count
+    total_result = await db.execute(count_stmt)
+    total = total_result.scalar()
 
-    # Apply pagination
+    # Apply pagination and ordering
     offset = (page - 1) * limit
-    items = query.order_by(UserMedia.consumed_at.desc()).offset(offset).limit(limit).all()
+    stmt = stmt.order_by(UserMedia.consumed_at.desc()).offset(offset).limit(limit)
+
+    # Execute query
+    result = await db.execute(stmt)
+    items = result.scalars().unique().all()
 
     return {
         "items": items,
@@ -65,22 +91,24 @@ async def get_user_media(
 async def delete_user_media(
     media_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Delete a user media entry
     """
-    user_media = (
-        db.query(UserMedia)
-        .filter(UserMedia.id == media_id, UserMedia.user_id == current_user.id)
-        .first()
+    # Find user media entry
+    stmt = select(UserMedia).where(
+        UserMedia.id == media_id,
+        UserMedia.user_id == current_user.id
     )
+    result = await db.execute(stmt)
+    user_media = result.scalar_one_or_none()
 
     if not user_media:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Media not found")
 
-    db.delete(user_media)
-    db.commit()
+    # Delete entry
+    await db.delete(user_media)
+    await db.commit()
 
     return {"message": "Media deleted successfully"}

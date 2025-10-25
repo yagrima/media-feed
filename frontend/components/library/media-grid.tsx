@@ -20,7 +20,7 @@ export function MediaGrid({ filters }: MediaGridProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['user-media', filters, currentPage],
     queryFn: () => mediaApi.getUserMedia({ ...filters, page: currentPage, limit: ITEMS_PER_PAGE }),
-    keepPreviousData: true, // Keep showing old data while fetching new page
+    placeholderData: (previousData) => previousData, // Keep showing old data while fetching new page
   })
 
   const handlePageChange = (page: number) => {

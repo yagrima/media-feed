@@ -1,0 +1,9 @@
+﻿{
+    "AllRunning":  false,
+    "Timestamp":  "2025-10-25 01:44:42",
+    "Services":  {
+                     "Backend":  false,
+                     "Database":  true,
+                     "Frontend":  false
+                 }
+}

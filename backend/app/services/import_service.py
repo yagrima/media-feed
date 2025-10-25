@@ -177,8 +177,12 @@ class ImportService:
             for idx, row in enumerate(rows, start=1):
                 try:
                     await parser.process_row(job.user_id, row)
+                    # Commit each row individually to avoid transaction issues
+                    await self.db.commit()
                     successful += 1
                 except Exception as e:
+                    # Rollback this row's transaction
+                    await self.db.rollback()
                     failed += 1
                     errors.append({
                         "row": idx,
@@ -215,6 +219,9 @@ class ImportService:
             )
 
         except Exception as e:
+            # Rollback the transaction to avoid InFailedSQLTransactionError
+            await self.db.rollback()
+            
             # Mark job as failed
             await self.update_job_status(
                 job_id,

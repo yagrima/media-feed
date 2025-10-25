@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mefeed_db_full
+    environment:
+      POSTGRES_DB: mefeed
+      POSTGRES_USER: mefeed_user
+      POSTGRES_PASSWORD: mefeed_pass_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: mefeed_redis_full
+    command: redis-server --requirepass redis_pass_2024
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mefeed_backend_full
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://mefeed_user:mefeed_pass_2024@db:5432/mefeed
+      - REDIS_URL=redis://:redis_pass_2024@redis:6379
+      - JWT_PRIVATE_KEY_PATH=./secrets/jwt_private.pem
+      - JWT_PUBLIC_KEY_PATH=./secrets/jwt_public.pem
+      - ENCRYPTION_KEY_PATH=./secrets/encryption.key
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:3002
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DEBUG=true
+    volumes:
+      - ./backend:/app:ro
+      - ./secrets:/app/secrets:ro
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

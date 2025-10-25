@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import Link from 'next/link'
-import { toast } from 'sonner'
+import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -61,20 +61,9 @@ export default function RegisterPage() {
       toast.success('Account created successfully!')
       router.push('/dashboard')
     } catch (error: any) {
+      // Error handling is done in the API client interceptor
+      // to ensure consistent toast display and duration
       console.error('Registration error:', error)
-      let message = 'Registration failed. Please try again.'
-
-      if (error.response?.data?.detail) {
-        const detail = error.response.data.detail
-        // Handle both string and array of validation errors
-        if (typeof detail === 'string') {
-          message = detail
-        } else if (Array.isArray(detail)) {
-          message = detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ')
-        }
-      }
-
-      toast.error(message)
     } finally {
       setIsLoading(false)
     }

@@ -3,6 +3,7 @@ Netflix CSV Parser - Parse Netflix viewing history CSV
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm.attributes import flag_modified
 from typing import Dict, Any
 from datetime import datetime
 import uuid
@@ -157,9 +158,10 @@ class NetflixCSVParser:
         Parse date string to datetime
 
         Supports multiple formats:
-        - MM/DD/YYYY
-        - DD/MM/YYYY
-        - YYYY-MM-DD
+        - MM/DD/YYYY (US format with 4-digit year)
+        - M/D/YY (US format with 2-digit year)
+        - DD/MM/YYYY (European format)
+        - YYYY-MM-DD (ISO format)
 
         Args:
             date_str: Date string
@@ -173,13 +175,17 @@ class NetflixCSVParser:
         # Remove quotes if present
         date_str = date_str.strip('"\'')
 
-        # Try different formats
+        # Try different formats (2-digit year formats first for Netflix)
         formats = [
-            '%m/%d/%Y',  # US format
-            '%d/%m/%Y',  # European format
+            '%m/%d/%y',  # US format with 2-digit year (e.g., 6/26/25)
+            '%d/%m/%y',  # European format with 2-digit year
+            '%m/%d/%Y',  # US format with 4-digit year
+            '%d/%m/%Y',  # European format with 4-digit year
             '%Y-%m-%d',  # ISO format
             '%m-%d-%Y',
-            '%d-%m-%Y'
+            '%d-%m-%Y',
+            '%m-%d-%y',
+            '%d-%m-%y'
         ]
 
         for fmt in formats:
@@ -217,18 +223,21 @@ class NetflixCSVParser:
         media = result.scalar_one_or_none()
 
         if media:
-            # Update metadata if needed
-            if media.metadata is None:
-                media.metadata = {}
-
+            # Update metadata if needed - JSONB requires special handling
+            current_metadata = media.media_metadata or {}
+            
             # Merge Netflix-specific metadata
-            if 'netflix_imports' not in media.metadata:
-                media.metadata['netflix_imports'] = []
+            if 'netflix_imports' not in current_metadata:
+                current_metadata['netflix_imports'] = []
 
-            media.metadata['netflix_imports'].append({
+            current_metadata['netflix_imports'].append({
                 'imported_at': datetime.utcnow().isoformat(),
                 'metadata': metadata
             })
+            
+            # Set the metadata and flag as modified for SQLAlchemy
+            media.media_metadata = current_metadata
+            flag_modified(media, 'media_metadata')
 
             # Update type if it was unknown
             if media.type in [None, 'unknown'] and media_type != 'unknown':
@@ -241,7 +250,7 @@ class NetflixCSVParser:
             title=title,
             type=media_type,
             platform_ids={'netflix': True},
-            metadata={
+            media_metadata={
                 'source': 'netflix_csv',
                 'imported_at': datetime.utcnow().isoformat(),
                 **metadata

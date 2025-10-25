@@ -22,6 +22,14 @@ secrets/
 *.pem
 *.key
 
+# Configuration with sensitive data
+config/secrets.json
+backend/pgpass.tmp
+*.tmp
+
+# Claude AI settings (may contain sensitive data)
+.claude/
+
 # Database
 *.db
 *.sqlite

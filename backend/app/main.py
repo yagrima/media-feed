@@ -132,7 +132,8 @@ async def root():
 app.include_router(auth.router, prefix="/api")
 app.include_router(import_api.router, prefix="/api")
 app.include_router(media_api.router)
-app.include_router(notification_api.router)
+# TODO: Fix notification_service async/sync issues before enabling
+# app.include_router(notification_api.router)
 
 
 # Global exception handler

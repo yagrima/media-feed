@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mefeed_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://mefeed_user:mefeed_pass_2024@host.docker.internal:5432/mefeed
+      - REDIS_URL=redis://:redis_pass_2024@host.docker.internal:6379
+      - JWT_PRIVATE_KEY_PATH=./secrets/jwt_private.pem
+      - JWT_PUBLIC_KEY_PATH=./secrets/jwt_public.pem
+      - ENCRYPTION_KEY_PATH=./secrets/encryption.key
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:3002
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DEBUG=true
+    volumes:
+      - ./backend:/app:ro
+      - ./secrets:/app/secrets:ro
+    restart: unless-stopped

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Media API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Media API Direct Test</h1>
+    
+    <div class="section info">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Make sure you're logged in on http://localhost:3000</li>
+            <li>Click "Test Media API" below</li>
+            <li>Check results</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h3>Step 1: Check Token</h3>
+        <button onclick="checkToken()">Check LocalStorage Token</button>
+        <pre id="tokenResult"></pre>
+    </div>
+
+    <div class="section">
+        <h3>Step 2: Test Media API</h3>
+        <button onclick="testMediaAPI()">Test Media API</button>
+        <pre id="apiResult"></pre>
+    </div>
+
+    <div class="section">
+        <h3>Step 3: Test with Fetch (CORS Test)</h3>
+        <button onclick="testWithFetch()">Test with Fetch</button>
+        <pre id="fetchResult"></pre>
+    </div>
+
+    <script>
+        function checkToken() {
+            const result = document.getElementById('tokenResult');
+            const token = localStorage.getItem('access_token');
+            
+            if (token) {
+                result.textContent = `✓ Token found: ${token.substring(0, 50)}...\nLength: ${token.length}`;
+                result.parentElement.className = 'section success';
+            } else {
+                result.textContent = '✗ No token in localStorage!\nPlease login at http://localhost:3000/login first';
+                result.parentElement.className = 'section error';
+            }
+        }
+
+        async function testMediaAPI() {
+            const result = document.getElementById('apiResult');
+            const token = localStorage.getItem('access_token');
+            
+            if (!token) {
+                result.textContent = '✗ No token found. Please login first.';
+                result.parentElement.className = 'section error';
+                return;
+            }
+
+            result.textContent = 'Testing...';
+            result.parentElement.className = 'section info';
+
+            try {
+                const response = await fetch('http://localhost:8000/api/media?page=1&limit=5', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.textContent = `✓ SUCCESS! Status: ${response.status}\n\n` +
+                        `Total items: ${data.total}\n` +
+                        `Items returned: ${data.items.length}\n\n` +
+                        `Response:\n${JSON.stringify(data, null, 2)}`;
+                    result.parentElement.className = 'section success';
+                } else {
+                    result.textContent = `✗ API Error: ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+                    result.parentElement.className = 'section error';
+                }
+            } catch (error) {
+                result.textContent = `✗ FETCH ERROR:\n${error.message}\n\nThis might be a CORS or network issue.`;
+                result.parentElement.className = 'section error';
+                console.error('Fetch error:', error);
+            }
+        }
+
+        async function testWithFetch() {
+            const result = document.getElementById('fetchResult');
+            const token = localStorage.getItem('access_token');
+            
+            result.textContent = 'Testing with detailed fetch...';
+            result.parentElement.className = 'section info';
+
+            try {
+                console.log('Making fetch request...');
+                const response = await fetch('http://localhost:8000/api/media?page=1&limit=5', {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Authorization': `Bearer ${token || 'NO_TOKEN'}`,
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    }
+                });
+
+                console.log('Response received:', response);
+
+                const data = await response.json();
+                
+                result.textContent = `Status: ${response.status}\n` +
+                    `Headers:\n${JSON.stringify(Object.fromEntries(response.headers), null, 2)}\n\n` +
+                    `Data:\n${JSON.stringify(data, null, 2)}`;
+                
+                result.parentElement.className = response.ok ? 'section success' : 'section error';
+            } catch (error) {
+                result.textContent = `FETCH FAILED:\n${error.name}: ${error.message}\n\n` +
+                    `This suggests:\n` +
+                    `- CORS configuration issue\n` +
+                    `- Network/connection problem\n` +
+                    `- Backend not responding\n\n` +
+                    `Check browser console for details.`;
+                result.parentElement.className = 'section error';
+                console.error('Detailed error:', error);
+            }
+        }
+
+        // Auto-check token on load
+        window.addEventListener('load', checkToken);
+    </script>
+</body>
+</html>

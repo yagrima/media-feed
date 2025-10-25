@@ -123,8 +123,9 @@ class UserMedia(Base):
     """User's media consumption tracking"""
     __tablename__ = "user_media"
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    media_id = Column(UUID(as_uuid=True), ForeignKey("media.id", ondelete="CASCADE"), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    media_id = Column(UUID(as_uuid=True), ForeignKey("media.id", ondelete="CASCADE"), nullable=False)
 
     status = Column(String(50), nullable=True)  # watched, reading, completed, in_progress
     platform = Column(String(50), nullable=True)  # where consumed
@@ -139,6 +140,12 @@ class UserMedia(Base):
     # Relationships
     user = relationship("User", back_populates="media_items")
     media = relationship("Media", back_populates="user_consumption")
+
+    __table_args__ = (
+        Index('idx_user_media_user', 'user_id'),
+        Index('idx_user_media_media', 'media_id'),
+        Index('idx_user_media_unique', 'user_id', 'media_id', unique=True),
+    )
 
     def __repr__(self):
         return f"<UserMedia user={self.user_id} media={self.media_id}>"

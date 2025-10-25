@@ -1,0 +1,27 @@
+{{ app_name }} - Daily Sequel Digest
+================================================================================
+
+Hi {{ user_name }},
+
+Great news! We found {{ sequel_count }} new sequel{{ 's' if sequel_count != 1 else '' }} for you:
+
+{% for sequel in sequels %}
+---
+{{ sequel.title }}
+{% if sequel.original_title %}Follows: {{ sequel.original_title }}{% endif %}
+{% if sequel.platform %}Platform: {{ sequel.platform }}{% endif %}
+{% if sequel.release_date %}Released: {{ sequel.release_date }}{% endif %}
+{% if sequel.confidence %}Match Confidence: {{ (sequel.confidence * 100)|int }}%{% endif %}
+
+{% endfor %}
+================================================================================
+
+View all in {{ app_name }}:
+{{ allowed_origins_list[0] if allowed_origins_list else 'Visit the app' }}
+
+You're receiving this daily digest because you've enabled sequel notifications.
+{% if unsubscribe_url %}
+Unsubscribe: {{ unsubscribe_url }}
+{% endif %}
+
+Manage your notification preferences in your account settings.
