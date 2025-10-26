@@ -1,9 +1,10 @@
 """
-Notification creation and management service
+Async Notification creation and management service
 """
 from typing import List, Dict, Any, Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, or_, select, func, update, delete
+from sqlalchemy.orm import selectinload
 from datetime import datetime, timedelta
 import logging
 import uuid
@@ -23,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 
 class NotificationService:
-    """Service for creating and managing user notifications"""
+    """Async Service for creating and managing user notifications"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def create_sequel_notification(
+    async def create_sequel_notification(
         self,
         user_id: uuid.UUID,
         original_media_id: uuid.UUID,
@@ -51,22 +52,29 @@ class NotificationService:
         """
         try:
             # Check if notification already exists (duplicate prevention)
-            existing = self.db.query(Notification).filter(
+            existing_query = select(Notification).where(
                 and_(
                     Notification.user_id == user_id,
                     Notification.media_id == original_media_id,
                     Notification.sequel_id == sequel_media_id,
                     Notification.type == 'sequel_found'
                 )
-            ).first()
+            )
+            existing_result = await self.db.execute(existing_query)
+            existing = existing_result.scalar_one_or_none()
 
             if existing:
                 logger.info(f"Duplicate notification skipped for user {user_id}")
                 return None
 
             # Get media details
-            sequel = self.db.query(Media).filter(Media.id == sequel_media_id).first()
-            original = self.db.query(Media).filter(Media.id == original_media_id).first()
+            sequel_query = select(Media).where(Media.id == sequel_media_id)
+            sequel_result = await self.db.execute(sequel_query)
+            sequel = sequel_result.scalar_one_or_none()
+            
+            original_query = select(Media).where(Media.id == original_media_id)
+            original_result = await self.db.execute(original_query)
+            original = original_result.scalar_one_or_none()
 
             if not sequel or not original:
                 logger.error(f"Media not found: sequel={sequel_media_id}, original={original_media_id}")
@@ -403,6 +411,77 @@ class NotificationService:
 
         # Token format: user_id:signature
         return f"{user_id}:{signature}"
+    
+    async def get_unread_count_async(self, user_id: uuid.UUID) -> int:
+        """
+        Get the count of unread notifications for a user (async version)
+        
+        Args:
+            user_id: User UUID
+            
+        Returns:
+            int: Count of unread notifications
+        """
+        try:
+            from sqlalchemy import select, func
+            from app.db.base import AsyncSessionLocal
+            
+            async with AsyncSessionLocal() as db:
+                count_query = select(func.count(Notification.id)).where(
+                    and_(
+                        Notification.user_id == user_id,
+                        Notification.read_at.is_(None)
+                    )
+                )
+                result = await db.execute(count_query)
+                count = result.scalar()
+            
+            return count or 0
+            
+        except Exception as e:
+            logger.error(f"Failed to get unread count: {str(e)}")
+            return 0
+    
+    async def get_notifications_count(
+        self, 
+        user_id: uuid.UUID, 
+        unread_only: bool = False
+    ) -> int:
+        """
+        Get the total count of notifications for a user
+        
+        Args:
+            user_id: User UUID
+            unread_only: If True, only count unread notifications
+            
+        Returns:
+            int: Count of notifications
+        """
+        try:
+            from sqlalchemy import select, func
+            from app.db.base import AsyncSessionLocal
+            
+            async with AsyncSessionLocal() as db:
+                if unread_only:
+                    count_query = select(func.count(Notification.id)).where(
+                        and_(
+                            Notification.user_id == user_id,
+                            Notification.read_at.is_(None)
+                        )
+                    )
+                else:
+                    count_query = select(func.count(Notification.id)).where(
+                        Notification.user_id == user_id
+                    )
+                
+                result = await db.execute(count_query)
+                count = result.scalar()
+                
+            return count or 0
+            
+        except Exception as e:
+            logger.error(f"Failed to get notifications count: {str(e)}")
+            return 0
 
 
 def create_notification_service(db: Session) -> NotificationService:
