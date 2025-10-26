@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/lib/api/dashboard'
+import MediaDetailModal from '@/components/library/media-detail-modal'
 import { Upload, Film, Tv, BookOpen, Headphones, TrendingUp, Clock, Loader2 } from 'lucide-react'
 
 const MEDIA_TYPE_CONFIG = {
@@ -36,10 +39,30 @@ const MEDIA_TYPE_CONFIG = {
 } as const
 
 export default function DashboardPage() {
+  const router = useRouter()
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null)
+  const [selectedMediaTitle, setSelectedMediaTitle] = useState<string>('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['dashboard-statistics'],
     queryFn: () => dashboardApi.getStatistics(),
   })
+
+  const handleMediaClick = (mediaId: string, mediaType: string, title: string) => {
+    if (mediaType === 'tv_series') {
+      setSelectedMediaId(mediaId)
+      setSelectedMediaTitle(title)
+      setIsModalOpen(true)
+    } else {
+      // For movies or other types, navigate to library with filter
+      router.push(`/library?type=${mediaType}`)
+    }
+  }
+
+  const handleTypeCardClick = (type: string) => {
+    router.push(`/library?type=${type}`)
+  }
 
   if (isLoading) {
     return (
@@ -124,7 +147,11 @@ export default function DashboardPage() {
           if (!typeStats || typeStats.total_count === 0) return null
           
           return (
-            <Card key={type}>
+            <Card 
+              key={type} 
+              className="cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => handleTypeCardClick(type)}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {config.label}
@@ -195,7 +222,8 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleMediaClick(item.media_id, item.type, item.title)}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className={`p-2 rounded-lg ${config?.bgColor || 'bg-gray-100'}`}>
@@ -229,6 +257,20 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Detail Modal */}
+      {selectedMediaId && (
+        <MediaDetailModal
+          mediaId={selectedMediaId}
+          mediaTitle={selectedMediaTitle}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedMediaId(null)
+            setSelectedMediaTitle('')
+          }}
+        />
+      )}
     </div>
   )
 }

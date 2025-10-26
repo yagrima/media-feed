@@ -28,6 +28,10 @@
 
 **As a user, I want the dashboard to show visual indicators (icons, colors) for different media types, so that I can distinguish between movies, TV shows, books, and audiobooks at a glance. [10/10]**
 
+**As a user viewing the dashboard, I want to click on a media type statistics card (Movies, TV Series, Books, Audiobooks) to navigate to my library filtered by that specific media type, so that I can quickly drill down into a specific category of content. [10/10]**
+
+**As a user viewing recent activity on the dashboard, I want to click on any recent activity item to open its detail view (for TV series) or navigate to its full information (currently filtered library for movies, will be movie detail modal in future), so that I can quickly access content I've recently consumed. [8/10]** (Note: TV series opens detail modal [complete], movies currently navigate to filtered library [temporary], movie detail modal planned [0/10])
+
 ---
 
 ### Authentication & Account Management
@@ -133,6 +137,18 @@ As a user, I want to browse my entire media library with filters so that I can e
 **As a user viewing episodes within a season, I want each episode to show its number and title when collapsed, and additionally show episode description when expanded, so that I can quickly scan episode names or dive deeper into content details as needed. [10/10]**
 
 **As a user, I want smooth animations when expanding/collapsing seasons and episodes, and the ability to close the modal with ESC key or clicking outside, so that the interface feels polished and intuitive. [10/10]**
+
+**As a user, I want to click on a movie card in my library or dashboard to open a movie detail view modal, so that I can see comprehensive information about the movie without leaving the current page. [0/10]**
+
+**As a user viewing a movie detail modal, I want to see a placeholder image area and essential movie information (title, type, platform, watch date) in the upper section, so that I can quickly identify the movie visually. [0/10]**
+
+**As a user viewing movie details, I want to see metadata like release year, genre, runtime, and a description placeholder, so that I have all relevant information about the film in one place. [0/10]**
+
+**As a user, I want the movie detail modal to have a consistent design with the TV series detail modal (same gradient header, close mechanisms), so that the interface feels cohesive and I can use the same interaction patterns. [0/10]**
+
+**As a developer, I want the movie detail modal to be a separate component from the TV series modal OR a unified component with conditional rendering, so that I can maintain clean code while supporting both media types efficiently. [0/10]**
+
+**As a user viewing recent activity on the dashboard, I want clicking on a movie to open its detail modal instead of navigating to the filtered library, so that I can quickly see movie information without losing my dashboard context. [0/10]**
 
 As a user, I want to search my media library by title so that I can quickly locate specific content. [6/10]
 

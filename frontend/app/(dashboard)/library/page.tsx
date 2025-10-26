@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -9,7 +10,16 @@ import Link from 'next/link'
 import { Upload } from 'lucide-react'
 
 export default function LibraryPage() {
+  const searchParams = useSearchParams()
+  const typeParam = searchParams.get('type') as 'movie' | 'tv_series' | null
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv_series'>('all')
+  
+  // Set filter from URL parameter on mount
+  useEffect(() => {
+    if (typeParam === 'movie' || typeParam === 'tv_series') {
+      setFilter(typeParam)
+    }
+  }, [typeParam])
   // true = endless, false = pagination
   const [isEndlessScrolling, setIsEndlessScrolling] = useState(true)
   const viewMode = isEndlessScrolling ? 'infinite' : 'pagination'
