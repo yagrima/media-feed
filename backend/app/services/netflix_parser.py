@@ -49,45 +49,53 @@ class NetflixCSVParser:
         # Parse date
         consumed_date = self._parse_date(date_str) if date_str else None
 
-        # Search for media in database
+        # Search for media in database (ONE per series)
         media = await self._find_or_create_media(
             title=parsed_title['main_title'],
             media_type=parsed_title['type'],
             metadata=parsed_title['metadata']
         )
 
-        # Check if already imported
-        existing = await self.db.execute(
-            select(UserMedia).where(
-                (UserMedia.user_id == user_id) &
-                (UserMedia.media_id == media.id)
-            )
+        # Check if this specific episode already imported (for TV series)
+        season_num = parsed_title.get('season_number')
+        episode_num = parsed_title.get('episode_number')
+        
+        # Build query with episode-specific constraint
+        query = select(UserMedia).where(
+            (UserMedia.user_id == user_id) &
+            (UserMedia.media_id == media.id)
         )
-
-        if existing.scalar_one_or_none():
-            # Update existing entry
-            user_media = existing.scalar_one()
-            user_media.consumed_at = consumed_date
-            user_media.raw_import_data = {
-                'original_title': title,
-                'date': date_str,
-                'updated_at': datetime.utcnow().isoformat()
-            }
-        else:
-            # Create new entry
-            user_media = UserMedia(
-                user_id=user_id,
-                media_id=media.id,
-                platform='netflix',
-                consumed_at=consumed_date,
-                imported_from=ImportSource.NETFLIX_CSV.value,
-                status='watched',
-                raw_import_data={
-                    'original_title': title,
-                    'date': date_str
-                }
+        
+        # For TV series, check season/episode combination
+        if parsed_title['type'] == 'tv_series' and (season_num is not None or episode_num is not None):
+            query = query.where(
+                (UserMedia.season_number == season_num) &
+                (UserMedia.episode_number == episode_num)
             )
-            self.db.add(user_media)
+        
+        existing = await self.db.execute(query)
+        
+        if existing.scalar_one_or_none():
+            # Episode already imported, skip
+            return
+        
+        # Create new UserMedia entry (one per episode)
+        user_media = UserMedia(
+            user_id=user_id,
+            media_id=media.id,
+            platform='netflix',
+            consumed_at=consumed_date,
+            imported_from=ImportSource.NETFLIX_CSV.value,
+            status='watched',
+            season_number=season_num,
+            episode_number=episode_num,
+            episode_title=parsed_title.get('episode_title'),
+            raw_import_data={
+                'original_title': title,
+                'date': date_str
+            }
+        )
+        self.db.add(user_media)
 
         await self.db.flush()
 
@@ -106,13 +114,21 @@ class NetflixCSVParser:
 
         if len(parts) >= 3:
             # TV series with season/episode
-            main_title = parts[0].strip()
-            season_info = parts[1].strip()
-            episode_info = ':'.join(parts[2:]).strip()
+            # Create ONE Media per series, multiple UserMedia per episode
+            base_title = parts[0].strip()  # "Arcane"
+            season_info = parts[1].strip()  # "Staffel 2"
+            episode_info = ':'.join(parts[2:]).strip()  # Episode name
+            
+            # Extract season and episode numbers
+            season_number = self._extract_season_number(season_info)
+            episode_number = self._extract_episode_number(episode_info)
 
             return {
-                'main_title': main_title,
+                'main_title': base_title,  # Series name for ONE Media entry
                 'type': 'tv_series',
+                'season_number': season_number,
+                'episode_number': episode_number,
+                'episode_title': episode_info,  # Full episode name
                 'metadata': {
                     'season': season_info,
                     'episode': episode_info,
@@ -152,6 +168,65 @@ class NetflixCSVParser:
                     'full_title': title
                 }
             }
+
+    def _extract_season_number(self, season_str: str) -> int:
+        """
+        Extract season number from season string
+        
+        Examples:
+            "Staffel 2" -> 2
+            "Season 1" -> 1
+            "Limited Series" -> None
+        
+        Args:
+            season_str: Season string from Netflix
+            
+        Returns:
+            Season number or None
+        """
+        import re
+        
+        # Try to find number after "Staffel" or "Season"
+        match = re.search(r'(?:staffel|season)\s*(\d+)', season_str, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+        
+        # Try to find standalone number
+        match = re.search(r'\d+', season_str)
+        if match:
+            return int(match.group(0))
+        
+        return None
+    
+    def _extract_episode_number(self, episode_str: str) -> int:
+        """
+        Extract episode number from episode string
+        
+        Examples:
+            "Episode 1: Title" -> 1
+            "Kapitel 5" -> 5
+            "Part 3" -> 3
+            "Just a title" -> None
+        
+        Args:
+            episode_str: Episode string from Netflix
+            
+        Returns:
+            Episode number or None
+        """
+        import re
+        
+        # Try to find number after common episode keywords
+        match = re.search(r'(?:episode|kapitel|part|teil)\s*(\d+)', episode_str, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+        
+        # Try to find leading number (e.g., "5. Title")
+        match = re.match(r'(\d+)[.:]\s*', episode_str)
+        if match:
+            return int(match.group(1))
+        
+        return None
 
     def _parse_date(self, date_str: str) -> datetime:
         """
@@ -205,9 +280,12 @@ class NetflixCSVParser:
     ) -> Media:
         """
         Find existing media or create new entry
+        
+        For TV series: Creates ONE Media per series (base_title)
+        For movies: Creates ONE Media per movie
 
         Args:
-            title: Media title
+            title: Media title (series name or movie name)
             media_type: Type of media
             metadata: Additional metadata
 
@@ -245,9 +323,10 @@ class NetflixCSVParser:
 
             return media
 
-        # Create new media entry
+        # Create new media entry (ONE per series/movie)
         media = Media(
-            title=title,
+            title=title,  # Series name for TV, movie name for movies
+            base_title=title if media_type == 'tv_series' else None,  # For consistency
             type=media_type,
             platform_ids={'netflix': True},
             media_metadata={

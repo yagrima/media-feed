@@ -36,7 +36,10 @@ class MediaResponse(MediaBase):
 
 class UserMediaBase(BaseModel):
     """Base user media schema"""
-    consumed_at: datetime
+    consumed_at: Optional[datetime] = None
+    season_number: Optional[int] = None
+    episode_number: Optional[int] = None
+    episode_title: Optional[str] = None
 
 
 class UserMediaResponse(UserMediaBase):

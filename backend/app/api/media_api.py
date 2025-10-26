@@ -43,78 +43,170 @@ async def get_user_media(
 ):
     """
     Get user's media library with optional filtering
+    
+    Returns one card per Media (series/movie), with episode counts for TV series.
+    Each UserMedia represents one episode, so we group by media_id.
 
     - **type**: Filter by movie or tv_series (optional)
     - **page**: Page number (default: 1)
     - **limit**: Items per page (default: 20, max: 100)
     """
-    # Build base statement
-    stmt = (
-        select(UserMedia)
-        .options(joinedload(UserMedia.media))
+    # Build query to get distinct media IDs for this user
+    # Group by media_id to get one row per series/movie
+    media_ids_stmt = (
+        select(Media.id, func.max(UserMedia.consumed_at).label('latest_consumed'))
+        .join(UserMedia)
         .where(UserMedia.user_id == current_user.id)
     )
-
-    # Build count statement
-    count_stmt = (
-        select(func.count())
-        .select_from(UserMedia)
-        .where(UserMedia.user_id == current_user.id)
-    )
-
+    
     # Apply type filter if provided
     if type:
-        stmt = stmt.join(Media).where(Media.type == type.value)
-        count_stmt = count_stmt.join(Media).where(Media.type == type.value)
-
-    # Get total count
+        media_ids_stmt = media_ids_stmt.where(Media.type == type.value)
+    
+    media_ids_stmt = media_ids_stmt.group_by(Media.id)
+    
+    # Count total unique media
+    count_stmt = select(func.count()).select_from(
+        media_ids_stmt.subquery()
+    )
     total_result = await db.execute(count_stmt)
     total = total_result.scalar()
-
-    # Apply pagination and ordering
-    offset = (page - 1) * limit
-    stmt = stmt.order_by(UserMedia.consumed_at.desc()).offset(offset).limit(limit)
-
-    # Execute query
+    
+    # Apply ordering and pagination on grouped results
+    media_ids_stmt = (
+        media_ids_stmt
+        .order_by(func.max(UserMedia.consumed_at).desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    
+    # Get the media IDs for this page
+    media_ids_result = await db.execute(media_ids_stmt)
+    media_ids = [row[0] for row in media_ids_result.all()]
+    
+    if not media_ids:
+        return {
+            "items": [],
+            "total": total,
+            "page": page,
+            "limit": limit,
+        }
+    
+    # Fetch full media objects with first UserMedia for each
+    # We need at least one UserMedia per Media to return
+    stmt = (
+        select(Media)
+        .options(joinedload(Media.user_consumption))
+        .where(Media.id.in_(media_ids))
+    )
+    
     result = await db.execute(stmt)
-    items = result.scalars().unique().all()
-
-    # For TV series, calculate watched episode counts
-    # Group by base_title or title (series name) and count episodes
-    for item in items:
-        if item.media.type == "tv_series":
-            # Use base_title if available, otherwise fall back to title
-            series_identifier = item.media.base_title or item.media.title
-            
-            # Count how many episodes of this series the user has watched
-            count_stmt = (
-                select(func.count())
-                .select_from(UserMedia)
-                .join(Media)
-                .where(
-                    and_(
-                        UserMedia.user_id == current_user.id,
-                        Media.type == "tv_series"
-                    )
+    media_items = result.scalars().unique().all()
+    
+    # For each media, count episodes and create a representative UserMedia
+    items = []
+    for media in media_items:
+        # Count total episodes for this media
+        episode_count_stmt = (
+            select(func.count())
+            .select_from(UserMedia)
+            .where(
+                and_(
+                    UserMedia.user_id == current_user.id,
+                    UserMedia.media_id == media.id
                 )
             )
-            
-            # Add condition based on what identifier we have
-            if item.media.base_title:
-                count_stmt = count_stmt.where(Media.base_title == item.media.base_title)
-            else:
-                count_stmt = count_stmt.where(Media.title == item.media.title)
-            
-            count_result = await db.execute(count_stmt)
-            watched_count = count_result.scalar()
-            # Attach count to media object (will be serialized in response)
-            item.media.watched_episodes_count = watched_count
+        )
+        count_result = await db.execute(episode_count_stmt)
+        watched_count = count_result.scalar()
+        
+        # Get the most recent UserMedia for this media (for consumed_at date)
+        latest_stmt = (
+            select(UserMedia)
+            .where(
+                and_(
+                    UserMedia.user_id == current_user.id,
+                    UserMedia.media_id == media.id
+                )
+            )
+            .order_by(UserMedia.consumed_at.desc())
+            .limit(1)
+        )
+        latest_result = await db.execute(latest_stmt)
+        representative_user_media = latest_result.scalar_one()
+        
+        # Attach episode count to media for serialization
+        if media.type == "tv_series":
+            media.watched_episodes_count = watched_count
+        
+        items.append(representative_user_media)
 
     return {
         "items": items,
         "total": total,
         "page": page,
         "limit": limit,
+    }
+
+
+@router.get("/media/{media_id}/episodes")
+async def get_media_episodes(
+    media_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get all episodes for a TV series
+    
+    Returns list of all episodes the user has watched for this series,
+    grouped by season and ordered by episode number.
+    """
+    # Verify media exists and is a TV series
+    media_stmt = select(Media).where(Media.id == media_id)
+    media_result = await db.execute(media_stmt)
+    media = media_result.scalar_one_or_none()
+    
+    if not media:
+        raise HTTPException(status_code=404, detail="Media not found")
+    
+    # Get all episodes for this media
+    episodes_stmt = (
+        select(UserMedia)
+        .where(
+            and_(
+                UserMedia.user_id == current_user.id,
+                UserMedia.media_id == media_id
+            )
+        )
+        .order_by(
+            UserMedia.season_number.asc().nulls_last(),
+            UserMedia.episode_number.asc().nulls_last(),
+            UserMedia.consumed_at.desc()
+        )
+    )
+    
+    episodes_result = await db.execute(episodes_stmt)
+    episodes = episodes_result.scalars().all()
+    
+    # Format response with episode details
+    return {
+        "media": {
+            "id": str(media.id),
+            "title": media.title,
+            "type": media.type,
+        },
+        "episodes": [
+            {
+                "id": str(ep.id),
+                "season_number": ep.season_number,
+                "episode_number": ep.episode_number,
+                "episode_title": ep.episode_title,
+                "consumed_at": ep.consumed_at.isoformat() if ep.consumed_at else None,
+                "platform": ep.platform,
+            }
+            for ep in episodes
+        ],
+        "total_episodes": len(episodes)
     }
 
 
@@ -125,7 +217,7 @@ async def delete_user_media(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Delete a user media entry
+    Delete a user media entry (single episode or entire series)
     """
     # Find user media entry
     stmt = select(UserMedia).where(

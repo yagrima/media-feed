@@ -131,6 +131,11 @@ class UserMedia(Base):
     platform = Column(String(50), nullable=True)  # where consumed
     consumed_at = Column(Date, nullable=True)
 
+    # Episode tracking (for TV series)
+    season_number = Column(Integer, nullable=True)
+    episode_number = Column(Integer, nullable=True)
+    episode_title = Column(String(500), nullable=True)
+
     # Import tracking
     imported_from = Column(String(50), nullable=True)  # csv, manual
     raw_import_data = Column(JSONB, nullable=True)  # original CSV row
@@ -144,11 +149,12 @@ class UserMedia(Base):
     __table_args__ = (
         Index('idx_user_media_user', 'user_id'),
         Index('idx_user_media_media', 'media_id'),
-        Index('idx_user_media_unique', 'user_id', 'media_id', unique=True),
+        Index('idx_user_media_episode_unique', 'user_id', 'media_id', 'season_number', 'episode_number', unique=True),
+        Index('idx_user_media_season', 'media_id', 'season_number'),
     )
 
     def __repr__(self):
-        return f"<UserMedia user={self.user_id} media={self.media_id}>"
+        return f"<UserMedia user={self.user_id} media={self.media_id} S{self.season_number}E{self.episode_number}>"
 
 
 class MonitoringQueue(Base):

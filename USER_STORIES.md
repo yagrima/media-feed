@@ -60,11 +60,13 @@ As a admin, I want to provide a larger library of media files for users to searc
 
 As a user, I want to browse my entire media library with filters so that I can easily find specific movies or TV shows. [7/10]
 
-**As a user viewing TV series in my library, I want to see the accurate number of episodes I've watched (e.g., "5/XX") next to each series title so that I can quickly track my viewing progress without manual counting. [10/10]**
+**As a user viewing TV series in my library, I want to see exactly ONE card per series (not one per episode) with the accurate number of episodes I've watched (e.g., "Arcane (18/XX)") so that my library remains organized and I can track my viewing progress at a glance. [10/10]**
 
 **As a user viewing movies in my library, I want episode counts to be completely hidden because they don't make sense for films and would only add visual clutter. [10/10]**
 
-**As a backend developer, I want the system to automatically count watched episodes by grouping imported viewing history by series base_title so that episode counts are accurate and update dynamically as users import more data. [10/10]**
+**As a backend developer, I want the system to store ONE Media entry per series and multiple UserMedia entries per episode (with season_number, episode_number, episode_title) so that the library can display one card per series while tracking individual episodes. [10/10]**
+
+**As a user, I want to click on a TV series card in my library to view a detailed list of all episodes I've watched, including season numbers, episode numbers, episode titles, and watch dates, so that I can see my complete viewing history for that series. [10/10]**
 
 As a user, I want to search my media library by title so that I can quickly locate specific content. [6/10]
 
