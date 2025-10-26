@@ -1,8 +1,8 @@
 """
 Notification API endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from uuid import UUID
 import logging
@@ -16,10 +16,10 @@ from app.schemas.notification_schemas import (
     NotificationPreferencesUpdate,
     UnsubscribeResponse
 )
-from app.services.notification_service import create_notification_service
+from app.services.notification_service_async import create_notification_service
 from app.core.dependencies import get_current_user
+from app.core.rate_limiter import get_rate_limiter
 from app.db.models import User
-from app.core.rate_limiter import rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +27,13 @@ router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 
 @router.get("", response_model=NotificationListResponse)
-@rate_limit(max_requests=100, window_seconds=60)
 async def get_notifications(
+    request: Request,
     unread_only: bool = Query(False, description="Filter for unread notifications only"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get user's notifications with pagination
@@ -47,6 +47,19 @@ async def get_notifications(
     # Calculate offset
     offset = (page - 1) * page_size
 
+    # Rate limiting check
+    limiter = get_rate_limiter()
+    rate_limit_key = f"notifications:get_notifications:{current_user.id}"
+    allowed, requests_made, retry_after = await limiter.check_rate_limit(
+        rate_limit_key, 100, 60
+    )
+    
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Retry after {retry_after} seconds."
+        )
+
     # Get notifications
     notifications = notification_service.get_user_notifications(
         user_id=current_user.id,
@@ -56,13 +69,14 @@ async def get_notifications(
     )
 
     # Get total count and unread count
-    total_query = db.query(db.query(User).filter(User.id == current_user.id).first().notifications)
-    total = len(current_user.notifications)
-    unread_count = notification_service.get_unread_count(current_user.id)
+    total_count = await notification_service.get_notifications_count(
+        current_user.id, unread_only
+    )
+    unread_count = await notification_service.get_unread_count_async(current_user.id)
 
     return NotificationListResponse(
         notifications=[NotificationResponse.from_orm(n) for n in notifications],
-        total=total,
+        total=total_count,
         unread_count=unread_count,
         page=page,
         page_size=page_size
@@ -70,10 +84,10 @@ async def get_notifications(
 
 
 @router.get("/unread", response_model=UnreadCountResponse)
-@rate_limit(max_requests=100, window_seconds=60)
 async def get_unread_count(
+    request: Request,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get count of unread notifications
@@ -81,17 +95,17 @@ async def get_unread_count(
     Returns the number of unread notifications for the current user.
     """
     notification_service = create_notification_service(db)
-    unread_count = await notification_service.get_unread_count(current_user.id)
+    unread_count = await notification_service.get_unread_count_async(current_user.id)
 
     return UnreadCountResponse(unread_count=unread_count)
 
 
 @router.put("/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT)
-@rate_limit(max_requests=100, window_seconds=60)
 async def mark_notification_as_read(
+    request: Request,
     notification_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Mark a specific notification as read
@@ -115,10 +129,10 @@ async def mark_notification_as_read(
 
 
 @router.put("/mark-all-read", response_model=dict)
-@rate_limit(max_requests=20, window_seconds=60)
 async def mark_all_notifications_as_read(
+    request: Request,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Mark all notifications as read for the current user
@@ -133,10 +147,10 @@ async def mark_all_notifications_as_read(
 
 
 @router.get("/preferences", response_model=NotificationPreferencesResponse)
-@rate_limit(max_requests=60, window_seconds=60)
 async def get_notification_preferences(
+    request: Request,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get user's notification preferences
@@ -151,11 +165,11 @@ async def get_notification_preferences(
 
 
 @router.put("/preferences", response_model=NotificationPreferencesResponse)
-@rate_limit(max_requests=30, window_seconds=60)
 async def update_notification_preferences(
+    request: Request,
     preferences_update: NotificationPreferencesUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Update user's notification preferences
@@ -190,7 +204,7 @@ async def update_notification_preferences(
 @router.get("/unsubscribe", response_model=UnsubscribeResponse)
 async def unsubscribe_from_emails(
     token: str = Query(..., description="Unsubscribe token from email"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Unsubscribe from email notifications using token
@@ -217,11 +231,11 @@ async def unsubscribe_from_emails(
 
 
 @router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
-@rate_limit(max_requests=60, window_seconds=60)
 async def delete_notification(
+    request: Request,
     notification_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Delete a specific notification
