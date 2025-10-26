@@ -81,7 +81,7 @@ class Settings(BaseSettings):
 
     # Session Management
     SESSION_TIMEOUT_MINUTES: int = 30
-    MAX_SESSIONS_PER_USER: int = 5
+    MAX_SESSIONS_PER_USER: int = 3  # Reduced from 5 for better security
 
     # API Keys
     RAPIDAPI_KEY: str = config.get('api_keys.rapidapi', '')

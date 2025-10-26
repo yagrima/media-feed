@@ -20,6 +20,10 @@ As a user, I want automatic session management so that I don't have to log in re
 
 As a user, I want to log out completely so that my account remains secure on shared devices. [7/10]
 
+**As a user, I want my sessions to be automatically cleaned up after they expire so that my account security is maintained and stale sessions don't accumulate. [10/10]**
+
+**As a system administrator, I want to limit concurrent sessions to 3 per user so that account sharing is minimized and security is enhanced. [10/10]**
+
 As a user, I want to reset my forgotten password securely so that I can regain access to my account. [2/10]
 
 As a user, I want to authenticate with Google/Microsoft so that I can access the app without creating another password. [0/10]
@@ -67,6 +71,12 @@ As a user, I want to view detailed information about media items so that I can s
 As a user, I want to mark media as favorites so that I can easily access my most-loved content. [3/10]
 
 As a user, I want to create custom lists or collections so that I can organize media by theme or mood. [0/10]
+
+**As a user, I want endless scrolling as the default view mode so that I can smoothly browse my entire library without clicking through pages. [10/10]**
+
+**As a user, I want a toggle slider to switch between endless scrolling and pagination modes so that I can choose my preferred browsing experience with a single click. [10/10]**
+
+**As a user, I want to see episode counts displayed as (watched/total) next to TV series titles so that I can quickly track my progress through shows. [9/10]** (Note: Currently shows 1/XX placeholder until backend provides total episode counts)
 
 X As a user, I want to rate and review content so that I can remember my opinions and share recommendations. [0/10]
 

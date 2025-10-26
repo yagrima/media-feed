@@ -2,12 +2,17 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { MediaGrid } from '@/components/library/media-grid'
 import Link from 'next/link'
 import { Upload } from 'lucide-react'
 
 export default function LibraryPage() {
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv_series'>('all')
+  // true = endless, false = pagination
+  const [isEndlessScrolling, setIsEndlessScrolling] = useState(true)
+  const viewMode = isEndlessScrolling ? 'infinite' : 'pagination'
 
   return (
     <div className="space-y-6">
@@ -26,30 +31,55 @@ export default function LibraryPage() {
         </Link>
       </div>
 
-      {/* Filter Buttons */}
-      <div className="flex gap-2">
-        <Button
-          variant={filter === 'all' ? 'default' : 'outline'}
-          onClick={() => setFilter('all')}
-        >
-          Alle
-        </Button>
-        <Button
-          variant={filter === 'movie' ? 'default' : 'outline'}
-          onClick={() => setFilter('movie')}
-        >
-          Filme
-        </Button>
-        <Button
-          variant={filter === 'tv_series' ? 'default' : 'outline'}
-          onClick={() => setFilter('tv_series')}
-        >
-          Serien
-        </Button>
+      {/* Filter and View Mode Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Type Filters */}
+        <div className="flex gap-2">
+          <Button
+            variant={filter === 'all' ? 'default' : 'outline'}
+            onClick={() => setFilter('all')}
+          >
+            Alle
+          </Button>
+          <Button
+            variant={filter === 'movie' ? 'default' : 'outline'}
+            onClick={() => setFilter('movie')}
+          >
+            Filme
+          </Button>
+          <Button
+            variant={filter === 'tv_series' ? 'default' : 'outline'}
+            onClick={() => setFilter('tv_series')}
+          >
+            Serien
+          </Button>
+        </div>
+
+        {/* View Mode Toggle Switch */}
+        <div className="flex items-center gap-3">
+          <Label 
+            htmlFor="view-mode" 
+            className="text-sm font-medium cursor-pointer"
+          >
+            Pagination
+          </Label>
+          <Switch
+            id="view-mode"
+            checked={isEndlessScrolling}
+            onCheckedChange={setIsEndlessScrolling}
+            aria-label="Toggle view mode"
+          />
+          <Label 
+            htmlFor="view-mode" 
+            className="text-sm font-medium cursor-pointer"
+          >
+            Endless Scrolling
+          </Label>
+        </div>
       </div>
 
       {/* Media Grid */}
-      <MediaGrid filters={{ type: filter }} />
+      <MediaGrid filters={{ type: filter }} viewMode={viewMode} />
     </div>
   )
 }

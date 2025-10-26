@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect, useRef } from 'react'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { mediaApi, UserMedia, MediaFilters } from '@/lib/api/media'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,18 +10,77 @@ import { Film, Tv, Loader2 } from 'lucide-react'
 
 interface MediaGridProps {
   filters: MediaFilters
+  viewMode: 'pagination' | 'infinite'
 }
 
 const ITEMS_PER_PAGE = 20
 
-export function MediaGrid({ filters }: MediaGridProps) {
+export function MediaGrid({ filters, viewMode }: MediaGridProps) {
   const [currentPage, setCurrentPage] = useState(1)
+  const observerTarget = useRef<HTMLDivElement>(null)
 
-  const { data, isLoading, error } = useQuery({
+  // Pagination mode query
+  const { data: paginatedData, isLoading: isPaginationLoading, error: paginationError } = useQuery({
     queryKey: ['user-media', filters, currentPage],
     queryFn: () => mediaApi.getUserMedia({ ...filters, page: currentPage, limit: ITEMS_PER_PAGE }),
-    placeholderData: (previousData) => previousData, // Keep showing old data while fetching new page
+    placeholderData: (previousData) => previousData,
+    enabled: viewMode === 'pagination',
   })
+
+  // Infinite scroll mode query
+  const {
+    data: infiniteData,
+    isLoading: isInfiniteLoading,
+    error: infiniteError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['user-media-infinite', filters],
+    queryFn: ({ pageParam = 1 }) => mediaApi.getUserMedia({ ...filters, page: pageParam, limit: ITEMS_PER_PAGE }),
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.page + 1
+      const totalPages = Math.ceil(lastPage.total / ITEMS_PER_PAGE)
+      return nextPage <= totalPages ? nextPage : undefined
+    },
+    initialPageParam: 1,
+    enabled: viewMode === 'infinite',
+  })
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (viewMode !== 'infinite') return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    const currentTarget = observerTarget.current
+    if (currentTarget) {
+      observer.observe(currentTarget)
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget)
+      }
+    }
+  }, [viewMode, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  // Use appropriate data based on mode
+  const data = viewMode === 'pagination' ? paginatedData : undefined
+  const isLoading = viewMode === 'pagination' ? isPaginationLoading : isInfiniteLoading
+  const error = viewMode === 'pagination' ? paginationError : infiniteError
+
+  // Flatten infinite data
+  const allItems = viewMode === 'infinite' && infiniteData
+    ? infiniteData.pages.flatMap((page) => page.items)
+    : data?.items || []
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -49,7 +108,7 @@ export function MediaGrid({ filters }: MediaGridProps) {
     )
   }
 
-  if (!data || data.items.length === 0) {
+  if (allItems.length === 0 && !isLoading) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-16">
@@ -65,17 +124,19 @@ export function MediaGrid({ filters }: MediaGridProps) {
     )
   }
 
-  const totalPages = Math.ceil(data.total / ITEMS_PER_PAGE)
+  const totalPages = data ? Math.ceil(data.total / ITEMS_PER_PAGE) : 0
+  const totalItems = viewMode === 'pagination' && data ? data.total : infiniteData?.pages[0]?.total || 0
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {data.items.map((userMedia: UserMedia) => (
+        {allItems.map((userMedia: UserMedia) => (
           <MediaCard key={userMedia.id} userMedia={userMedia} />
         ))}
       </div>
 
-      {data.total > ITEMS_PER_PAGE && (
+      {/* Pagination mode */}
+      {viewMode === 'pagination' && data && data.total > ITEMS_PER_PAGE && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -84,6 +145,21 @@ export function MediaGrid({ filters }: MediaGridProps) {
           onPageChange={handlePageChange}
         />
       )}
+
+      {/* Infinite scroll observer target */}
+      {viewMode === 'infinite' && (
+        <div ref={observerTarget} className="flex items-center justify-center py-8">
+          {isFetchingNextPage && (
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Loading more...</p>
+            </div>
+          )}
+          {!hasNextPage && allItems.length > 0 && (
+            <p className="text-sm text-muted-foreground">You've reached the end of your library ({totalItems} items)</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -91,6 +167,10 @@ export function MediaGrid({ filters }: MediaGridProps) {
 function MediaCard({ userMedia }: { userMedia: UserMedia }) {
   const { media } = userMedia
   const Icon = media.type === 'movie' ? Film : Tv
+
+  // Calculate episode count (placeholder for now)
+  // TODO: Backend needs to provide actual episode counts
+  const episodeCount = media.type === 'tv_series' ? '1/XX' : null
 
   return (
     <Card className="hover:shadow-lg transition-shadow cursor-pointer">
@@ -102,7 +182,12 @@ function MediaCard({ userMedia }: { userMedia: UserMedia }) {
           </Badge>
         </div>
 
-        <h3 className="font-semibold mb-1 line-clamp-2">{media.title}</h3>
+        <div className="mb-1">
+          <h3 className="font-semibold line-clamp-2 inline">{media.title}</h3>
+          {episodeCount && (
+            <span className="text-sm text-muted-foreground ml-2">({episodeCount})</span>
+          )}
+        </div>
 
         {media.season_number && (
           <p className="text-sm text-muted-foreground mb-2">Season {media.season_number}</p>
