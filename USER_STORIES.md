@@ -8,6 +8,28 @@
 
 ## User Story Evaluation (0-10 Scale)
 
+### Navigation & User Experience
+
+**As a user, I want to click on the "Me Feed" logo/text in the top left corner to return to the dashboard from any page, so that I always have a quick way to get back to my overview. [10/10]**
+
+**As a user, I want the dashboard to be my central hub that shows me at-a-glance statistics about all my media consumption, so that I can quickly understand my viewing/reading habits without navigating through different sections. [10/10]**
+
+---
+
+### Dashboard & Overview
+
+**As a user viewing the dashboard, I want to see aggregate statistics for each media type (movies, TV series, books, audiobooks) displayed in separate cards, so that I can quickly understand how much content I've consumed in each category. [10/10]**
+
+**As a user, I want to see my total episode count for TV series, total movie count, and totals for other media types, so that I have a comprehensive view of my media consumption. [10/10]**
+
+**As a user, I want the dashboard to display recently watched/read items, so that I can quickly resume or remember what I've been consuming lately. [10/10]**
+
+**As a developer, I want the dashboard architecture to be designed with extensibility in mind, so that adding new media types (books, audiobooks, podcasts, games) in the future requires minimal code changes. [10/10]**
+
+**As a user, I want the dashboard to show visual indicators (icons, colors) for different media types, so that I can distinguish between movies, TV shows, books, and audiobooks at a glance. [10/10]**
+
+---
+
 ### Authentication & Account Management
 
 As a new user, I want to create an account with my email and password so that I can access personalized media tracking features. [8/10]
@@ -48,11 +70,43 @@ As a user, I want to edit or remove incorrect entries from my media history so t
 
 As a user, I want to see validation feedback on CSV uploads so that I can fix formatting issues before importing. [7/10]
 
-As a user, I want to import from multiple streaming platforms so that I can consolidate all my viewing history. [1/10]
+**As a user, I want to import from multiple streaming platforms (Netflix, Prime Video, Disney+, HBO Max) using their CSV exports, so that I can consolidate all my viewing history in one place. [1/10]**
 
-As a user, I want to link my streaming accounts directly so that my viewing history updates automatically. [0/10]
+**As a user, I want the system to automatically detect which platform my CSV file is from based on its format/headers, so that I don't have to manually select the platform each time. [0/10]**
+
+**As a user, I want to receive a reminder notification every X weeks (configurable) to update my viewing history, with direct links to each platform's download page, so that my data stays current without me having to remember. [0/10]**
 
 As a admin, I want to provide a larger library of media files for users to search. [0/10]
+
+---
+
+### Browser Extension & Automated Sync (Future Features)
+
+**As a user, I want to install a lightweight browser extension that can automatically export my viewing history from Netflix, so that I don't have to manually download CSV files repeatedly. [0/10]**
+
+**As a user, I want the browser extension to run in the background and sync my viewing history on a schedule I configure (daily/weekly/monthly), so that my Me Feed library is always up-to-date without manual intervention. [0/10]**
+
+**As a user, I want the browser extension to require my explicit consent before accessing any data and clearly show me what data will be sent to Me Feed, so that I maintain full control over my privacy. [0/10]**
+
+**As a user, I want the browser extension to work offline and queue sync operations when I'm disconnected, automatically syncing when I reconnect, so that my history is never lost. [0/10]**
+
+**As a user, I want the extension to show me a summary of new items it found before syncing, with the option to review and exclude specific entries, so that I can curate what gets imported. [0/10]**
+
+**As a developer, I want the browser extension architecture to be platform-agnostic (works on Chrome, Firefox, Edge, Safari), so that we maximize user reach without maintaining separate codebases. [0/10]**
+
+**As a user, I want the extension to handle authentication with Me Feed securely using OAuth/API keys, never storing my Netflix password, so that my streaming credentials remain protected. [0/10]**
+
+**As a user, I want to receive notifications from the extension when sync fails (e.g., Netflix changed their page structure), with clear troubleshooting steps, so that I'm aware of issues immediately. [0/10]**
+
+---
+
+### API-Based Integration (Conditional on Platform APIs)
+
+**As a platform developer, I want the Me Feed backend to support OAuth2 integration for streaming platforms that offer APIs, so that users can authorize automatic data access without manual CSV uploads. [0/10]**
+
+**As a user, I want to connect my streaming accounts via OAuth (if the platform supports it) and have Me Feed automatically fetch new viewing activity in the background, so that I never have to think about imports again. [0/10]**
+
+**As a system administrator, I want the backend to gracefully handle platform API rate limits and unavailability, with automatic retry logic and user notifications, so that temporary issues don't break the service. [0/10]**
 
 ---
 
@@ -62,11 +116,23 @@ As a user, I want to browse my entire media library with filters so that I can e
 
 **As a user viewing TV series in my library, I want to see exactly ONE card per series (not one per episode) with the accurate number of episodes I've watched (e.g., "Arcane (18/XX)") so that my library remains organized and I can track my viewing progress at a glance. [10/10]**
 
+**As a user who watches the same series in different languages (e.g., Season 1 in English, Season 2 in German), I want the system to recognize them as the SAME series and show me ONE card with the TOTAL episode count across all languages, so that my viewing history is consolidated correctly. [10/10]**
+
 **As a user viewing movies in my library, I want episode counts to be completely hidden because they don't make sense for films and would only add visual clutter. [10/10]**
 
 **As a backend developer, I want the system to store ONE Media entry per series and multiple UserMedia entries per episode (with season_number, episode_number, episode_title) so that the library can display one card per series while tracking individual episodes. [10/10]**
 
-**As a user, I want to click on a TV series card in my library to view a detailed list of all episodes I've watched, including season numbers, episode numbers, episode titles, and watch dates, so that I can see my complete viewing history for that series. [10/10]**
+**As a user, I want to click on a TV series card in my library to open a detail view modal, so that I can see comprehensive information about the series and my viewing progress without leaving the library page. [10/10]**
+
+**As a user viewing a series detail modal, I want to see a placeholder image area and essential series information (title, type, total episodes watched) in the upper section, so that I can quickly identify the series visually and understand my overall progress. [10/10]**
+
+**As a user viewing episode details, I want to see all episodes organized by season with collapsible/expandable season groups, so that I can navigate through the series structure efficiently without being overwhelmed by too much information at once. [10/10]**
+
+**As a user, I want seasons I have watched (fully or partially) to be automatically expanded by default, along with the next unwatched season, while the rest remain collapsed, so that I can immediately see my current progress and what comes next without manual interaction. [10/10]**
+
+**As a user viewing episodes within a season, I want each episode to show its number and title when collapsed, and additionally show episode description when expanded, so that I can quickly scan episode names or dive deeper into content details as needed. [10/10]**
+
+**As a user, I want smooth animations when expanding/collapsing seasons and episodes, and the ability to close the modal with ESC key or clicking outside, so that the interface feels polished and intuitive. [10/10]**
 
 As a user, I want to search my media library by title so that I can quickly locate specific content. [6/10]
 

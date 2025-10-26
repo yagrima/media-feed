@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Pagination } from '@/components/ui/pagination'
 import { Film, Tv, Loader2 } from 'lucide-react'
+import MediaDetailModal from './media-detail-modal'
 
 interface MediaGridProps {
   filters: MediaFilters
@@ -165,6 +166,7 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
 }
 
 function MediaCard({ userMedia }: { userMedia: UserMedia }) {
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
   const { media } = userMedia
   const Icon = media.type === 'movie' ? Film : Tv
 
@@ -176,36 +178,58 @@ function MediaCard({ userMedia }: { userMedia: UserMedia }) {
     ? '?/XX' // Fallback if count not available yet (no extra parentheses)
     : null
 
+  const handleClick = () => {
+    // Only open detail modal for TV series
+    if (media.type === 'tv_series') {
+      setIsDetailOpen(true)
+    }
+  }
+
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <Icon className="h-5 w-5 text-muted-foreground" />
-          <Badge variant={media.type === 'movie' ? 'default' : 'secondary'}>
-            {media.type === 'movie' ? 'Movie' : 'TV Series'}
-          </Badge>
-        </div>
+    <>
+      <Card 
+        className="hover:shadow-lg transition-shadow cursor-pointer" 
+        onClick={handleClick}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <Icon className="h-5 w-5 text-muted-foreground" />
+            <Badge variant={media.type === 'movie' ? 'default' : 'secondary'}>
+              {media.type === 'movie' ? 'Movie' : 'TV Series'}
+            </Badge>
+          </div>
 
-        <div className="mb-1">
-          <h3 className="font-semibold line-clamp-2 inline">{media.title}</h3>
-          {episodeCount && (
-            <span className="text-sm text-muted-foreground ml-2">({episodeCount})</span>
+          <div className="mb-1">
+            <h3 className="font-semibold line-clamp-2 inline">{media.title}</h3>
+            {episodeCount && (
+              <span className="text-sm text-muted-foreground ml-2">({episodeCount})</span>
+            )}
+          </div>
+
+          {media.season_number && (
+            <p className="text-sm text-muted-foreground mb-2">Season {media.season_number}</p>
           )}
-        </div>
 
-        {media.season_number && (
-          <p className="text-sm text-muted-foreground mb-2">Season {media.season_number}</p>
-        )}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t">
+            <Badge variant="outline" className="text-xs">
+              {media.platform}
+            </Badge>
+            <p className="text-xs text-muted-foreground">
+              {new Date(userMedia.consumed_at).toLocaleDateString()}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="flex items-center justify-between mt-3 pt-3 border-t">
-          <Badge variant="outline" className="text-xs">
-            {media.platform}
-          </Badge>
-          <p className="text-xs text-muted-foreground">
-            {new Date(userMedia.consumed_at).toLocaleDateString()}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Detail Modal for TV Series */}
+      {media.type === 'tv_series' && (
+        <MediaDetailModal
+          mediaId={media.id}
+          mediaTitle={media.title}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+        />
+      )}
+    </>
   )
 }

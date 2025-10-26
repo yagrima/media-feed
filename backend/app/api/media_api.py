@@ -123,6 +123,7 @@ async def get_user_media(
         # Get the most recent UserMedia for this media (for consumed_at date)
         latest_stmt = (
             select(UserMedia)
+            .options(joinedload(UserMedia.media))  # FIX: Load media relationship
             .where(
                 and_(
                     UserMedia.user_id == current_user.id,
@@ -133,11 +134,15 @@ async def get_user_media(
             .limit(1)
         )
         latest_result = await db.execute(latest_stmt)
-        representative_user_media = latest_result.scalar_one()
+        representative_user_media = latest_result.scalar_one_or_none()
+        
+        # Skip if no user_media found (shouldn't happen, but defensive)
+        if not representative_user_media:
+            continue
         
         # Attach episode count to media for serialization
-        if media.type == "tv_series":
-            media.watched_episodes_count = watched_count
+        if representative_user_media.media.type == "tv_series":
+            representative_user_media.media.watched_episodes_count = watched_count
         
         items.append(representative_user_media)
 

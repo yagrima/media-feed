@@ -37,6 +37,25 @@ export interface MediaFilters {
   limit?: number
 }
 
+export interface Episode {
+  id: string
+  season_number: number | null
+  episode_number: number | null
+  episode_title: string | null
+  consumed_at: string | null
+  platform: string | null
+}
+
+export interface MediaDetailsResponse {
+  media: {
+    id: string
+    title: string
+    type: string
+  }
+  episodes: Episode[]
+  total_episodes: number
+}
+
 export const mediaApi = {
   /**
    * Get user's media library
@@ -52,6 +71,14 @@ export const mediaApi = {
     }
 
     const response = await apiClient.get('/api/media', { params })
+    return response.data
+  },
+
+  /**
+   * Get detailed episode information for a media item
+   */
+  async getMediaEpisodes(mediaId: string): Promise<MediaDetailsResponse> {
+    const response = await apiClient.get(`/api/media/${mediaId}/episodes`)
     return response.data
   },
 

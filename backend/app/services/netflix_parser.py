@@ -59,6 +59,7 @@ class NetflixCSVParser:
         # Check if this specific episode already imported (for TV series)
         season_num = parsed_title.get('season_number')
         episode_num = parsed_title.get('episode_number')
+        episode_title_str = parsed_title.get('episode_title')
         
         # Build query with episode-specific constraint
         query = select(UserMedia).where(
@@ -66,8 +67,15 @@ class NetflixCSVParser:
             (UserMedia.media_id == media.id)
         )
         
-        # For TV series, check season/episode combination
-        if parsed_title['type'] == 'tv_series' and (season_num is not None or episode_num is not None):
+        # For TV series, use episode_title as unique identifier
+        # (episode_number may be NULL for non-English titles)
+        if parsed_title['type'] == 'tv_series' and episode_title_str:
+            query = query.where(
+                (UserMedia.season_number == season_num) &
+                (UserMedia.episode_title == episode_title_str)
+            )
+        elif parsed_title['type'] == 'tv_series' and episode_num is not None:
+            # Fallback: use episode_number if available
             query = query.where(
                 (UserMedia.season_number == season_num) &
                 (UserMedia.episode_number == episode_num)
