@@ -27,6 +27,10 @@ config/secrets.json
 backend/pgpass.tmp
 *.tmp
 
+# Additional test files with sensitive data
+**/test_*.py
+backend/test_*.py
+
 # Claude AI settings (may contain sensitive data)
 .claude/
 

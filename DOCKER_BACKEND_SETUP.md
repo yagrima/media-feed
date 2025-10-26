@@ -82,7 +82,7 @@ PYTHONPATH=/app alembic upgrade head
 **Registrierung:**
 ```bash
 POST http://localhost:8000/api/auth/register
-Body: {"username":"testuser","email":"test@example.com","password":"TestPass123!"}
+Body: {"username":"testuser","email":"test@example.com","password":"[SECURE_TEST_PASSWORD]"}
 # Status: 201 Created ✅
 # Output: User ID, email, timestamps
 ```
@@ -144,8 +144,10 @@ redis:
 
 **Erstellt:**
 - `db_user.txt`: `mefeed_user`
-- `db_password.txt`: `mefeed_pass_2024`
-- `redis_password.txt`: `kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r`
+- `db_password.txt`: [SECURE_PASSWORD]
+- `redis_password.txt`: [SECURE_REDIS_PASSWORD]
+
+⚠️ **SECURITY NOTE**: These are actual passwords. In production environments, never commit real passwords to documentation!
 
 ---
 

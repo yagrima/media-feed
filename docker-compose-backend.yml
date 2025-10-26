@@ -7,8 +7,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://mefeed_user:mefeed_pass_2024@host.docker.internal:5432/mefeed
-      - REDIS_URL=redis://:redis_pass_2024@host.docker.internal:6379
+      - DATABASE_URL=postgresql+asyncpg://mefeed_user:$(cat ./secrets/db_password.txt)@host.docker.internal:5432/mefeed
+      - REDIS_URL=redis://:$(cat ./secrets/redis_password.txt)@host.docker.internal:6379
       - JWT_PRIVATE_KEY_PATH=./secrets/jwt_private.pem
       - JWT_PUBLIC_KEY_PATH=./secrets/jwt_public.pem
       - ENCRYPTION_KEY_PATH=./secrets/encryption.key

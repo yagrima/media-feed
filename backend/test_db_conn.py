@@ -1,11 +1,12 @@
 import asyncio
 import asyncpg
+import os
 
 async def test_connection():
     try:
         conn = await asyncpg.connect(
-            user='mefeed_user',
-            password='mefeed_pass_2024',
+            user=os.getenv('DB_USER', 'mefeed_user'),
+            password=os.getenv('DB_PASSWORD'),
             database='mefeed',
             host='127.0.0.1',
             port=5432
