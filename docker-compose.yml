@@ -90,8 +90,16 @@ services:
       - backend-network
     volumes:
       - ./backend:/app:ro
+      - celery_data:/tmp/celery
+      - celery_data:/var/run/celery
     user: "1000:1000"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "from app.celery_app import celery_app; celery_app.control.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
@@ -136,3 +144,4 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  celery_data:

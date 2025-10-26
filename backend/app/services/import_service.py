@@ -271,12 +271,22 @@ class ImportService:
             self.db.add(media)
             await self.db.flush()
 
+        # Parse consumed_at if provided
+        consumed_date = None
+        if consumed_at:
+            try:
+                from dateutil.parser import parse as parse_date
+                consumed_date = parse_date(consumed_at).date()
+            except Exception as e:
+                # Log error but don't fail the import
+                logger.warning(f"Failed to parse consumed_at date: {consumed_at}", extra={"error": str(e)})
+
         # Add to user's library
         user_media = UserMedia(
             user_id=user_id,
             media_id=media.id,
             platform=platform,
-            consumed_at=consumed_at,
+            consumed_at=consumed_date,
             imported_from=ImportSource.MANUAL.value,
             raw_import_data={
                 "title": title,

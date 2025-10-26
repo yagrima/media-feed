@@ -26,6 +26,8 @@ celery_app.conf.update(
     task_soft_time_limit=25 * 60,  # 25 minutes
     worker_prefetch_multiplier=4,
     worker_max_tasks_per_child=1000,
+    # Fix for read-only filesystem in containers
+    beat_schedule_filename='/var/run/celery/celerybeat-schedule',
 )
 
 # Configure periodic tasks (Celery Beat)
