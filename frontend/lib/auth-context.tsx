@@ -19,6 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -62,13 +63,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (email: string, password: string) => {
-    await apiClient.post('/api/auth/register', {
+    const response = await apiClient.post('/api/auth/register', {
       email,
       password,
     });
 
-    // Auto-login after registration
-    await login(email, password);
+    // Backend now returns tokens on registration (auto-login)
+    const { access_token, refresh_token } = response.data;
+    setTokens(access_token, refresh_token);
+
+    // Fetch user data
+    const userResponse = await apiClient.get('/api/auth/me');
+    setUser(userResponse.data);
   };
 
   const logout = async () => {
@@ -82,6 +88,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await apiClient.get('/api/auth/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      clearTokens();
+      setUser(null);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -90,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         register,
         logout,
+        refreshUser,
         isAuthenticated: !!user,
       }}
     >

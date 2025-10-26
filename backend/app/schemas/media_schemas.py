@@ -28,6 +28,7 @@ class MediaResponse(MediaBase):
     """Media response schema"""
     id: UUID
     created_at: datetime
+    watched_episodes_count: Optional[int] = None  # Number of watched episodes for TV series
 
     class Config:
         from_attributes = True

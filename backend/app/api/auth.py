@@ -20,7 +20,7 @@ from app.core.config import settings
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/hour")
 async def register(
     request: Request,
@@ -28,28 +28,38 @@ async def register(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Register new user with password validation
+    Register new user and return authentication tokens
+    
+    After successful registration, the user is automatically logged in.
 
     Rate limit: 5 requests per hour per IP
     """
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+    
     # Create user
     user = await AuthService.create_user(db, user_data.email, user_data.password)
+
+    # Create tokens (auto-login)
+    access_token, refresh_token = await AuthService.create_tokens(
+        db, user, ip_address, user_agent
+    )
 
     # Log security event
     await AuthService.log_security_event(
         db,
         event_type="user_registered",
         user_id=str(user.id),
-        ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        ip_address=ip_address,
+        user_agent=user_agent,
+        metadata={"auto_login": True}
     )
 
-    return UserResponse(
-        id=str(user.id),
-        email=user.email,
-        email_verified=user.email_verified,
-        created_at=user.created_at,
-        last_login_at=user.last_login_at
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 
 

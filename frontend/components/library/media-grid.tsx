@@ -168,9 +168,13 @@ function MediaCard({ userMedia }: { userMedia: UserMedia }) {
   const { media } = userMedia
   const Icon = media.type === 'movie' ? Film : Tv
 
-  // Calculate episode count (placeholder for now)
-  // TODO: Backend needs to provide actual episode counts
-  const episodeCount = media.type === 'tv_series' ? '1/XX' : null
+  // Show episode count only for TV series
+  // Use nullish coalescing to handle 0 and undefined cases
+  const episodeCount = media.type === 'tv_series' && media.watched_episodes_count != null
+    ? `${media.watched_episodes_count}/XX`
+    : media.type === 'tv_series'
+    ? '?/XX' // Fallback if count not available yet (no extra parentheses)
+    : null
 
   return (
     <Card className="hover:shadow-lg transition-shadow cursor-pointer">

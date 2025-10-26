@@ -46,6 +46,7 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true)
     try {
+      // Backend now returns tokens on registration (auto-login)
       const response = await authApi.register({
         email: data.email,
         password: data.password,
@@ -57,12 +58,13 @@ export default function RegisterPage() {
         response.refresh_token,
         response.expires_in
       )
-
-      toast.success('Account created successfully!')
+      
+      toast.success('Account created successfully! You are now logged in.')
+      // Redirect immediately - the auth context will load the user automatically
       router.push('/dashboard')
     } catch (error: any) {
       // Error handling is done in the API client interceptor
-      // to ensure consistent toast display and duration
+      toast.error(error.response?.data?.detail || 'Registration failed')
       console.error('Registration error:', error)
     } finally {
       setIsLoading(false)

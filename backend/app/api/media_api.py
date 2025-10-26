@@ -6,7 +6,7 @@ Handles user media library operations
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from typing import List, Optional
 from uuid import UUID
 
@@ -78,6 +78,37 @@ async def get_user_media(
     # Execute query
     result = await db.execute(stmt)
     items = result.scalars().unique().all()
+
+    # For TV series, calculate watched episode counts
+    # Group by base_title or title (series name) and count episodes
+    for item in items:
+        if item.media.type == "tv_series":
+            # Use base_title if available, otherwise fall back to title
+            series_identifier = item.media.base_title or item.media.title
+            
+            # Count how many episodes of this series the user has watched
+            count_stmt = (
+                select(func.count())
+                .select_from(UserMedia)
+                .join(Media)
+                .where(
+                    and_(
+                        UserMedia.user_id == current_user.id,
+                        Media.type == "tv_series"
+                    )
+                )
+            )
+            
+            # Add condition based on what identifier we have
+            if item.media.base_title:
+                count_stmt = count_stmt.where(Media.base_title == item.media.base_title)
+            else:
+                count_stmt = count_stmt.where(Media.title == item.media.title)
+            
+            count_result = await db.execute(count_stmt)
+            watched_count = count_result.scalar()
+            # Attach count to media object (will be serialized in response)
+            item.media.watched_episodes_count = watched_count
 
     return {
         "items": items,

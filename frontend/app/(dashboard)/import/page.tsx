@@ -6,13 +6,17 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Upload, ArrowLeft, FileText, CheckCircle2 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
+import { useImport } from '@/lib/import-context'
+import { useRouter } from 'next/navigation'
 
 export default function ImportPage() {
+  const router = useRouter()
+  const { setCurrentJobId } = useImport()
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string; jobId?: string } | null>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
   const dragCounterRef = useRef(0)
 
@@ -59,10 +63,22 @@ export default function ImportPage() {
       if (response.ok) {
         const result = await response.json()
         console.log('Upload successful:', result)
+        
+        // Set job ID for global status tracking
+        if (result.id) {
+          setCurrentJobId(result.id)
+        }
+        
         setUploadResult({ 
           success: true, 
-          message: `Erfolgreich ${result.imported_count || 'deine'} Medieneinträge importiert!` 
+          message: `CSV wird verarbeitet...`,
+          jobId: result.id
         })
+        
+        // Redirect to library after 2 seconds
+        setTimeout(() => {
+          router.push('/library')
+        }, 2000)
       } else {
         const error = await response.json()
         console.error('Upload failed:', response.status, error)

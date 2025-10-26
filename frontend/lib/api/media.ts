@@ -20,6 +20,7 @@ export interface Media {
   platform: string
   base_title?: string
   season_number?: number
+  watched_episodes_count?: number
   created_at: string
 }
 

@@ -60,6 +60,12 @@ As a admin, I want to provide a larger library of media files for users to searc
 
 As a user, I want to browse my entire media library with filters so that I can easily find specific movies or TV shows. [7/10]
 
+**As a user viewing TV series in my library, I want to see the accurate number of episodes I've watched (e.g., "5/XX") next to each series title so that I can quickly track my viewing progress without manual counting. [10/10]**
+
+**As a user viewing movies in my library, I want episode counts to be completely hidden because they don't make sense for films and would only add visual clutter. [10/10]**
+
+**As a backend developer, I want the system to automatically count watched episodes by grouping imported viewing history by series base_title so that episode counts are accurate and update dynamically as users import more data. [10/10]**
+
 As a user, I want to search my media library by title so that I can quickly locate specific content. [6/10]
 
 As a user, I want to filter my library by media type (movies vs TV shows) so that I can focus on what I'm currently watching. [7/10]

@@ -4,6 +4,24 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { useState } from 'react'
 import { ErrorBoundary } from './error-boundary'
+import { ImportProvider, useImport } from '@/lib/import-context'
+import { ImportStatusBanner } from './import/import-status-banner'
+
+function ImportBannerWrapper() {
+  const { currentJobId, setCurrentJobId } = useImport()
+  
+  return (
+    <ImportStatusBanner
+      jobId={currentJobId}
+      onComplete={() => {
+        // Keep showing banner for 5 seconds after completion
+      }}
+      onDismiss={() => {
+        setCurrentJobId(null)
+      }}
+    />
+  )
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -25,33 +43,39 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <ImportProvider>
+          <ImportBannerWrapper />
+          {children}
+        </ImportProvider>
         <Toaster 
-        position="top-center"
-        toastOptions={{
-          duration: 30000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-            fontSize: '16px',
-            maxWidth: '500px',
-          },
-          success: {
-            duration: 5000,
-            iconTheme: {
-              primary: '#4aed88',
-              secondary: '#fff',
+          position="bottom-left"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+              fontSize: '14px',
+              maxWidth: '400px',
             },
-          },
-          error: {
-            duration: 30000,
-            iconTheme: {
-              primary: '#ff6b6b',
-              secondary: '#fff',
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4aed88',
+                secondary: '#fff',
+              },
             },
-          }
-        }}
-      />
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ff6b6b',
+                secondary: '#fff',
+              },
+            },
+            loading: {
+              duration: Infinity,
+            }
+          }}
+        />
       </QueryClientProvider>
     </ErrorBoundary>
   )
