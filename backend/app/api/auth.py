@@ -9,7 +9,8 @@ from app.db.base import get_db
 from app.db.models import User, UserSession
 from app.schemas.auth import (
     UserCreate, UserLogin, TokenResponse, TokenRefresh,
-    UserResponse, SessionResponse, PasswordResetRequest, PasswordResetConfirm
+    UserResponse, SessionResponse, PasswordResetRequest, PasswordResetConfirm,
+    EmailVerification
 )
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user
