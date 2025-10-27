@@ -22,18 +22,22 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Copy entrypoint script and set permissions (as root)
+COPY railway-entrypoint.sh /app/railway-entrypoint.sh
+RUN chmod +x /app/railway-entrypoint.sh && chown appuser:appuser /app/railway-entrypoint.sh
+
 # Copy application code
 COPY --chown=appuser:appuser . .
 
 # Switch to non-root user
 USER appuser
 
-# Expose port
+# Expose port (Railway uses PORT env variable)
 EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
 
-# Run application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Run application via entrypoint script
+ENTRYPOINT ["/app/railway-entrypoint.sh"]
