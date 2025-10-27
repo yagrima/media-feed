@@ -23,6 +23,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy entrypoint script and set permissions (as root)
+# Cache bust: 2025-10-27
 COPY railway-entrypoint.sh /app/railway-entrypoint.sh
 RUN chmod +x /app/railway-entrypoint.sh && chown appuser:appuser /app/railway-entrypoint.sh
 
