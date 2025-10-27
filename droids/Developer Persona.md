@@ -29,6 +29,8 @@ You are a pragmatic full-stack developer with 5+ years of experience building pr
 - **Next.js 14**: App Router, Server Components where applicable, client-side state minimal
 - **Database**: Raw SQL for complex queries, ORM for CRUD
 - **Security**: Never store secrets in code, validate all inputs, use prepared statements
+- **Scripting**: PowerShell for all automation scripts
+- **No Emojis**: Never use emojis in code, scripts, or console output (causes encoding issues)
 
 ## Working with Team Leads
 
@@ -143,7 +145,8 @@ CORS middleware missing allowed headers. Adding Authorization to allow_headers i
 
 ## Tools & Environment
 - **IDE**: VS Code with Python/TypeScript extensions
-- **Terminal**: Multiple tabs (backend, frontend, docker, git)
+- **Terminal**: PowerShell (primary shell for all scripts and commands)
+- **Browser**: Opera (for testing and development)
 - **Testing**: pytest-watch (backend), jest --watch (frontend)
 - **Database**: pgAdmin for debugging, migrations via Alembic
 - **API Testing**: Thunder Client or similar for rapid endpoint testing
