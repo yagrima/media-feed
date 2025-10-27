@@ -18,13 +18,13 @@ RUN groupadd -r appuser && \
 WORKDIR /app
 
 # Copy and install dependencies as root
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (includes railway-entrypoint.sh)
 ARG CACHEBUST=1
-COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser backend/ .
 
 # Set entrypoint script permissions
 RUN chmod +x /app/railway-entrypoint.sh
