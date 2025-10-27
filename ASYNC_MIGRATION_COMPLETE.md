@@ -132,7 +132,7 @@ access-control-allow-methods: DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT
 SELECT COUNT(*) FROM user_media;
 -- Result: 69 rows
 
-SELECT email FROM users WHERE email = 'rene.matis89@gmail.com';
+SELECT email FROM users WHERE email = 'user@example.com';
 -- Result: User exists
 ```
 

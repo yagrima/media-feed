@@ -96,9 +96,9 @@ REDIS_URL=redis://:$(cat /run/secrets/redis_password)@redis:6379
 
 # Email Configuration
 SMTP_HOST=smtp-relay.brevo.com
-SMTP_USER=9a1910001@smtp-brevo.com
-SMTP_PASSWORD=HvZ6fn5jYpBJDaNL
-FROM_EMAIL=rene.matis89@gmail.com
+SMTP_USER=your_smtp_username
+SMTP_PASSWORD=your_smtp_password
+FROM_EMAIL=your_from_email
 
 # Production URLs
 ALLOWED_ORIGINS=https://mefeed.com,https://www.mefeed.com

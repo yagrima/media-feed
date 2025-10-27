@@ -123,8 +123,8 @@ jobs:
         image: postgres:15-alpine
         env:
           POSTGRES_DB: test_mefeed
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: postgres_user
+          POSTGRES_PASSWORD: postgres_password
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -172,7 +172,7 @@ jobs:
       run: |
         cd backend
         cat > .env << EOF
-        DATABASE_URL=postgresql+asyncpg://test_user:test_password@localhost:5432/test_mefeed
+        DATABASE_URL=postgresql+asyncpg://postgres_user:postgres_password@localhost:5432/test_mefeed
         REDIS_URL=redis://localhost:6379
         SECRET_KEY=test_secret_key_for_ci_only_do_not_use_in_production
         DEBUG=true

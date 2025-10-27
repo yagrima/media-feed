@@ -117,9 +117,9 @@ git push origin main
 - [ ] Add DATABASE_URL (from Railway DB details)
 - [ ] Add REDIS_URL (from Railway Redis details)
 - [ ] Add SMTP_HOST=smtp-relay.brevo.com
-- [ ] Add SMTP_USER=9a1910001@smtp-brevo.com
-- [ ] Add SMTP_PASSWORD=HvZ6fn5jYpBJDaNL
-- [ ] Add FROM_EMAIL=rene.matis89@gmail.com
+- [ ] Add SMTP_USER=your_smtp_username
+- [ ] Add SMTP_PASSWORD=your_smtp_password
+- [ ] Add FROM_EMAIL=your_from_email
 - [ ] Add JWT_PRIVATE_KEY_PATH=/app/secrets/jwt_private.pem
 - [ ] Add JWT_PUBLIC_KEY_PATH=/app/secrets/jwt_public.pem
 
