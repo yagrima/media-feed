@@ -23,13 +23,13 @@ services:
   redis:
     image: redis:7-alpine
     container_name: mefeed_redis
-    command: redis-server --requirepass kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r
+    command: /bin/sh -c "redis-server --requirepass $$(cat /run/secrets/redis_password)"
     networks:
       - backend-network
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a $$(cat /run/secrets/redis_password) ping"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -45,7 +45,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    env_file: .env
+    env_file: "${MEFEED_ENV_FILE:-../Media Feed Secrets/.env}"
     secrets:
       - db_user
       - db_password
@@ -80,7 +80,7 @@ services:
       - redis
       - db
     env_file:
-      - .env
+      - "${MEFEED_ENV_FILE:-../Media Feed Secrets/.env}"
     secrets:
       - db_user
       - db_password
@@ -120,19 +120,19 @@ services:
 
 secrets:
   db_user:
-    file: ./secrets/db_user.txt
+    file: "${MEFEED_SECRETS_DIR}/secrets/db_user.txt"
   db_password:
-    file: ./secrets/db_password.txt
+    file: "${MEFEED_SECRETS_DIR}/secrets/db_password.txt"
   redis_password:
-    file: ./secrets/redis_password.txt
+    file: "${MEFEED_SECRETS_DIR}/secrets/redis_password.txt"
   jwt_private_key:
-    file: ./secrets/jwt_private.pem
+    file: "${MEFEED_SECRETS_DIR}/secrets/jwt_private.pem"
   jwt_public_key:
-    file: ./secrets/jwt_public.pem
+    file: "${MEFEED_SECRETS_DIR}/secrets/jwt_public.pem"
   encryption_key:
-    file: ./secrets/encryption.key
+    file: "${MEFEED_SECRETS_DIR}/secrets/encryption.key"
   secret_key:
-    file: ./secrets/secret_key.txt
+    file: "${MEFEED_SECRETS_DIR}/secrets/secret_key.txt"
 
 networks:
   backend-network:

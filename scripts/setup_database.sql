@@ -6,8 +6,9 @@ DROP DATABASE IF EXISTS mefeed;
 DROP USER IF EXISTS mefeed_admin;
 DROP USER IF EXISTS mefeed_user;
 
--- 2. Create new user with strong password
-CREATE USER mefeed_admin WITH PASSWORD 'MFdb@2024!Secure';
+-- 2. Create new user with password from external secrets
+-- Password location: ../Media Feed Secrets/secrets/db_password.txt
+CREATE USER mefeed_admin WITH PASSWORD 'PASSWORD_FROM_SECRETS_DIR';
 
 -- 3. Create database with the new user as owner
 CREATE DATABASE mefeed OWNER mefeed_admin;

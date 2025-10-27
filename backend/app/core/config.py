@@ -2,11 +2,23 @@
 Configuration management with security validation
 """
 from pydantic_settings import BaseSettings
-from pydantic import field_validator, Field
+from pydantic import field_validator
 from typing import List
 import os
 from pathlib import Path
 from .config_loader import config
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+DEFAULT_SECRETS_DIR = Path(
+    os.getenv(
+        "MEFEED_SECRETS_DIR",
+        PROJECT_ROOT.parent / "Media Feed Secrets" / "secrets"
+    )
+).resolve(strict=False)
+DEFAULT_ENV_FILE = Path(
+    os.getenv("MEFEED_ENV_FILE", DEFAULT_SECRETS_DIR / ".env")
+).resolve(strict=False)
 
 
 class Settings(BaseSettings):
@@ -54,9 +66,11 @@ class Settings(BaseSettings):
             return f"redis://{redis_config['host']}:{redis_config['port']}/{redis_config['db']}"
 
     # Security - File paths for keys
-    JWT_PRIVATE_KEY_PATH: str = config.get('jwt.private_key_file', "./secrets/jwt_private.pem")
-    JWT_PUBLIC_KEY_PATH: str = config.get('jwt.public_key_file', "./secrets/jwt_public.pem")
-    ENCRYPTION_KEY_PATH: str = config.get('security.encryption_key_file', "./secrets/encryption.key")
+    SECRETS_BASE_DIR: str = str(DEFAULT_SECRETS_DIR)
+
+    JWT_PRIVATE_KEY_PATH: str = config.get('jwt.private_key_file', str(DEFAULT_SECRETS_DIR / "secrets" / "jwt_private.pem"))
+    JWT_PUBLIC_KEY_PATH: str = config.get('jwt.public_key_file', str(DEFAULT_SECRETS_DIR / "secrets" / "jwt_public.pem"))
+    ENCRYPTION_KEY_PATH: str = config.get('security.encryption_key_file', str(DEFAULT_SECRETS_DIR / "secrets" / "encryption.key"))
     SECRET_KEY: str = config.get('security.secret_key', '')
 
     # CORS & Security
@@ -193,7 +207,7 @@ class Settings(BaseSettings):
         return [host.strip() for host in self.ALLOWED_HOSTS.split(",")]
 
     class Config:
-        env_file = ".env"
+        env_file = str(DEFAULT_ENV_FILE)
         case_sensitive = True
 
 

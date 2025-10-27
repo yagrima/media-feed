@@ -246,6 +246,49 @@ class EmailService:
             logger.error(f"Failed to send verification email: {str(e)}")
             return False
 
+    def send_password_reset_email(
+        self,
+        to_email: str,
+        reset_token: str
+    ) -> bool:
+        """
+        Send password reset email with secure token
+
+        Args:
+            to_email: User's email address
+            reset_token: Password reset token
+
+        Returns:
+            bool: True if sent successfully
+        """
+        try:
+            # Generate reset URL (using frontend URL)
+            reset_url = f"{settings.ALLOWED_ORIGINS.split(',')[0]}/reset-password?token={reset_token}"
+            
+            # Prepare email data
+            template_data = {
+                'reset_url': reset_url,
+                'app_name': settings.APP_NAME,
+                'support_email': settings.FROM_EMAIL
+            }
+
+            # Render templates (using email_verification templates as base)
+            html_body = self._render_template('password_reset.html', template_data)
+            text_body = self._render_template('password_reset.txt', template_data)
+            
+            subject = f"Reset your {settings.APP_NAME} password"
+
+            return self.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_body=html_body,
+                text_body=text_body
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to send password reset email: {str(e)}")
+            return False
+
     def _render_template(self, template_name: str, data: Dict[str, Any]) -> str:
         """
         Render a Jinja2 template

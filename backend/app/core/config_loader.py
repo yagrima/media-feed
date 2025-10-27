@@ -14,12 +14,26 @@ class ConfigLoader:
     
     def __init__(self, config_path: str = None):
         if config_path is None:
-            # Default to config/secrets.json relative to project root
-            project_root = Path(__file__).parent.parent.parent.parent
-            config_path = project_root / "config" / "secrets.json"
-        
+            project_root = Path(__file__).resolve().parent.parent.parent.parent
+            secrets_base_dir = Path(
+                os.getenv(
+                    "MEFEED_SECRETS_DIR",
+                    project_root.parent / "Media Feed Secrets" / "secrets"
+                )
+            ).resolve(strict=False)
+            config_path = Path(secrets_base_dir).parent / "config" / "secrets.json"
+        else:
+            config_abs_path = Path(config_path).resolve(strict=False)
+            secrets_base_dir = (
+                config_abs_path.parent.parent
+                if config_abs_path.parent.name == "config"
+                else config_abs_path.parent
+            )
+            config_path = config_abs_path
+
         self.config_path = Path(config_path)
-        self.project_root = self.config_path.parent.parent
+        self.project_root = Path(__file__).resolve().parent.parent.parent.parent
+        self.secrets_base_dir = secrets_base_dir
         self._config = {}
         self.load_config()
     
@@ -41,16 +55,15 @@ class ConfigLoader:
         """Resolve file paths relative to config file location"""
         if not file_path:
             return None
-        
-        # Handle relative paths (starting with ../)
-        if file_path.startswith('../'):
-            return self.config_path.parent.parent / file_path[3:]
-        elif file_path.startswith('./'):
-            return self.config_path.parent / file_path[2:]
-        elif not Path(file_path).is_absolute():
-            return self.project_root / file_path
-        else:
-            return Path(file_path)
+        candidate = Path(file_path)
+
+        if candidate.is_absolute():
+            return candidate
+
+        if file_path.startswith('../') or file_path.startswith('./'):
+            return (self.config_path.parent / file_path).resolve(strict=False)
+
+        return (self.secrets_base_dir / file_path).resolve(strict=False)
     
     def _read_file_content(self, file_path: str, encoding: str = 'utf-8') -> Optional[str]:
         """Read content from a file referenced in configuration"""

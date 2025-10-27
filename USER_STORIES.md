@@ -36,7 +36,7 @@
 
 ### Authentication & Account Management
 
-As a new user, I want to create an account with my email and password so that I can access personalized media tracking features. [8/10]
+**As a new user, I want to create an account with my email and password, receive a verification email, and confirm my email address so that I can access personalized media tracking features and prevent fake registrations. [9/10]** (Note: Email verification implemented with Brevo SMTP)
 
 As a returning user, I want to log in securely with my credentials so that I can access my media history and preferences. [9/10]
 
@@ -50,7 +50,7 @@ As a user, I want to log out completely so that my account remains secure on sha
 
 **As a system administrator, I want to limit concurrent sessions to 3 per user so that account sharing is minimized and security is enhanced. [10/10]**
 
-As a user, I want to reset my forgotten password securely so that I can regain access to my account. [2/10]
+**As a user, I want to reset my forgotten password securely via email so that I can regain access to my account. [8/10]** (Note: Password reset endpoint implemented with email verification)
 
 As a user, I want to authenticate with Google/Microsoft so that I can access the app without creating another password. [0/10]
 
@@ -220,7 +220,7 @@ As a user, I want to receive push notifications on my mobile device so that I ge
 
 As a user, I want to set quiet hours for notifications so that I'm not disturbed during specific times. [0/10]
 
-As a user, I want to receive weekly digest emails so that I can review all updates at once. [3/10]
+**As a user, I want to receive configurable daily/weekly digest emails with new media matches and viewing updates so that I can review all updates at once. [8/10]** (Note: Daily digest implemented with HTML templates via Brevo SMTP)
 
 ---
 
@@ -320,7 +320,7 @@ As an administrator, I want to view audit logs so that I can track system usage 
 
 As a support agent, I want to access user import logs so that I can troubleshoot CSV issues. [6/10]
 
-As a support agent, I want to reset user passwords securely so that I can help users regain access. [2/10]
+**As a support agent, I want to initiate password reset emails for users who contact support so that I can help users regain access securely. [8/10]** (Note: Password reset flow implemented configurable via admin panel)
 
 As an administrator, I want to configure system settings so that I can adapt the platform to organizational needs. [1/10]
 

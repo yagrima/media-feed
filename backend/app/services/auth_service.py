@@ -288,3 +288,128 @@ class AuthService:
 
         db.add(event)
         await db.commit()
+
+    @staticmethod
+    async def verify_email(db: AsyncSession, token: str) -> bool:
+        """Verify email address using token"""
+        try:
+            from app.core.security import security_service
+            
+            # Verify token
+            payload = security_service.verify_token(token, token_type="email_verify")
+            if not payload:
+                return False
+            
+            user_id = payload.get("sub")
+            if not user_id:
+                return False
+            
+            # Get user and set as verified
+            result = await db.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            
+            if not user:
+                return False
+            
+            user.email_verified = True
+            await db.commit()
+            
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    async def resend_verification_email(db: AsyncSession, email: str) -> bool:
+        """Resend verification email"""
+        try:
+            from app.services.email_service import EmailService
+            from app.core import token_manager
+            
+            # Get user
+            result = await db.execute(select(User).where(User.email == email))
+            user = result.scalar_one_or_none()
+            
+            if not user or user.email_verified:
+                return False
+            
+            # Create verification token
+            verification_token = token_manager.create_token(
+                user_id=str(user.id),
+                token_type="email_verify",
+                expires_in=86400  # 24 hours
+            )
+            
+            # Send email
+            email_service = EmailService()
+            await email_service.send_verification_email(
+                user.email,
+                verification_token
+            )
+            
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    async def send_password_reset_email(db: AsyncSession, email: str) -> bool:
+        """Send password reset email"""
+        try:
+            from app.services.email_service import EmailService
+            from app.core import token_manager
+            
+            # Get user
+            result = await db.execute(select(User).where(User.email == email))
+            user = result.scalar_one_or_none()
+            
+            if not user:
+                return False
+            
+            # Create reset token
+            reset_token = token_manager.create_token(
+                user_id=str(user.id),
+                token_type="password_reset",
+                expires_in=3600  # 1 hour
+            )
+            
+            # Send email
+            email_service = EmailService()
+            await email_service.send_password_reset_email(
+                user.email,
+                reset_token
+            )
+            
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    async def confirm_password_reset(
+        db: AsyncSession, token: str, new_password: str
+    ) -> bool:
+        """Confirm password reset and update password"""
+        try:
+            from app.core.security import security_service
+            
+            # Verify token
+            payload = security_service.verify_token(token, token_type="password_reset")
+            if not payload:
+                return False
+            
+            user_id = payload.get("sub")
+            if not user_id:
+                return False
+            
+            # Get user
+            result = await db.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            
+            if not user:
+                return False
+            
+            # Update password
+            user.password_hash = security_service.hash_password(new_password)
+            await db.commit()
+            
+            return True
+        except Exception:
+            return False

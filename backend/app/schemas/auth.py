@@ -86,6 +86,30 @@ class EmailVerification(BaseModel):
     token: str
 
 
+class PasswordResetRequest(BaseModel):
+    """Password reset request schema"""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Password reset confirmation schema"""
+    token: str
+    new_password: constr(min_length=12, max_length=128)
+
+    @validator('new_password')
+    def validate_password_strength(cls, v):
+        """Enforce password complexity requirements"""
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('Password must contain at least one digit')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+            raise ValueError('Password must contain at least one special character')
+        return v
+
+
 class SessionResponse(BaseModel):
     """Active session information"""
     id: str

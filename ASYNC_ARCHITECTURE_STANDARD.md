@@ -14,6 +14,12 @@ From this point forward, **ALL services in Me Feed SHALL implement async/await p
 
 ## 📋 **MANDATORY IMPLEMENTATION REQUIREMENTS**
 
+### 🔐 Secret Management Standard
+- **Storage Location:** All runtime secrets (`.env`, credentials, key material) SHALL reside outside the repository under `../Media Feed Secrets` (override with `MEFEED_SECRETS_DIR`).
+- **Environment Loading:** FastAPI reads environment variables from `MEFEED_ENV_FILE` (defaults to `../Media Feed Secrets/.env`).
+- **Key Resolution:** JWT, Fernet, and related keys MUST be placed in `<MEFEED_SECRETS_DIR>/secrets/`.
+- **Repository Hygiene:** Secret-bearing files are prohibited in Git history; guardians MUST verify clean commits.
+
 ### **1. Database Services**
 ```python
 # ❌ FORBIDDEN - Sync patterns

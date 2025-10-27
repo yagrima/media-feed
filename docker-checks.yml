@@ -1,0 +1,267 @@
+# Health Checks Docker Compose Configuration
+version: '3.8'
+
+services:
+  # Production application with health checks
+  backend:
+    image: yagrima/mefeed-backend:latest
+    container_name: mefeed_backend_prod_check
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ../Media Feed Secrets/.env
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+      - redis_password
+      - jwt_private_key
+      - jwt_public_key
+      - encryption_key
+      - secret_key
+    ports:
+      - "8000:8000"
+    networks:
+      - backend-network
+      - frontend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Frontend with health checks
+  frontend:
+    image: yagrima/mefeed-frontend:latest
+    container_name: mefeed_frontend_prod_check
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NODE_ENV=production
+    networks:
+      - frontend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Database with enhanced health checks
+  db:
+    image: postgres:15-alpine
+    container_name: mefeed_db_prod_check
+    environment:
+      POSTGRES_DB_FILE: /run/secrets/db_name
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - backend-network
+      restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$(cat /run/secrets/db_user)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis with health checks
+  redis:
+    image: redis:7-alpine
+    container_name: mefeed_redis_prod_check
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    secrets:
+      - redis_password
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend-network
+      - frontend-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Celery worker
+  celery:
+    image: yagrima/mefeed-backend:latest
+    container_name: mefeed_celery_prod_check
+    command: celery -A app.celery_app.celery_app worker --beat --loglevel=info --concurrency=2
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ../Media Feed Secrets/.env
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+      - redis_password
+      - encryption_key
+      - rapidapi_key
+      - tmdb_api_key
+    networks:
+      - backend-network
+    volumes:
+      - ./logs:/app/logs
+      - celery_data:/tmp/celery
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "celery", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx reverse proxy (optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: mefeed_nginx_prod_check
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - frontend-network
+      - backend-network
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+secrets:
+  db_name:
+    file: ../Media Feed Secrets/secrets/db_name.txt
+  db_user:
+    file: ../Media Feed Secrets/secrets/db_user.txt
+  db_password:
+    file: ../Media Feed Secrets/secrets/db_password.txt
+  redis_password:
+    file: ../Media Feed Secrets/secrets/redis_password.txt
+  jwt_private_key:
+    file: ../Media Feed Secrets/secrets/jwt_private.pem
+  jwt_public_key:
+    file: ../Media Feed Secrets/secrets/jwt_public.pem
+  encryption_key:
+    file: ../Media Feed Secrets/secrets/encryption.key
+  secret_key:
+    file: ../Media Feed Secrets/secrets/secret_key.txt
+  rapidapi_key:
+    file: ../Media Feed Secrets/secrets/config/secrets.json
+  tmdb_api_key:
+    file: ../Media Feed Secrets/secrets/config/secrets.json
+
+networks:
+  backend-network:
+    driver: bridge
+    internal: true
+  frontend-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  celery_data:
+    driver: local

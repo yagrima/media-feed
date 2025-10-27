@@ -4,6 +4,7 @@ Database setup script using asyncpg
 """
 import asyncio
 import asyncpg
+import os
 
 async def setup_database():
     """Create database and user"""
@@ -40,7 +41,7 @@ async def setup_database():
             DO $$ 
             BEGIN
                 IF NOT EXISTS (SELECT FROM pg_catalog pg_roles WHERE rolname = 'mefeed_admin') THEN
-                    CREATE USER mefeed_admin WITH PASSWORD 'MFdb@2024!Secure';
+                    CREATE USER mefeed_admin WITH PASSWORD os.getenv('DB_ADMIN_PASSWORD', '');
                 END IF;
             END
             $$;
@@ -74,7 +75,7 @@ async def setup_database():
                 host='localhost',
                 port=5432,
                 user='mefeed_admin',
-                password='MFdb@2024!Secure',
+                password=os.getenv('DB_PASSWORD', ''),  # Use environment variable instead
                 database='mefeed'
             )
             print("✓ Connected as mefeed_admin")

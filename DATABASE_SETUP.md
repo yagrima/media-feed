@@ -6,7 +6,7 @@
 - **Server**: localhost:5432
 - **Database Name**: mefeed
 - **User**: mefeed_admin
-- **Password**: MFdb@2024!Secure
+- **Password**: Stored in `../Media Feed Secrets/secrets/db_password.txt`
 - **Superuser**: postgres (system admin)
 
 ### Redis Cache
@@ -23,7 +23,7 @@
 -- Open PostgreSQL Command Line or pgAdmin
 
 -- Create user
-CREATE USER mefeed_admin WITH PASSWORD 'MFdb@2024!Secure';
+CREATE USER mefeed_admin WITH PASSWORD 'PASSWORD_FROM_SECRETS_DIR';  -- See ../Media Feed Secrets/secrets/db_password.txt
 
 -- Create database
 CREATE DATABASE mefed OWNER mefeed_admin;
@@ -47,16 +47,12 @@ SELECT current_database(), current_user;
 
 ### 2. Configuration Files
 
-#### Backend Configuration (`config/secrets.json`)
-```json
-{
-  "database": {
-    "user": "mefeed_admin",
-    "password": "MFdb@2024!Secure",
-    "host": "localhost",
-    "port": "5432",
-    "name": "mefeed"
-  },
+#### Backend Configuration (external secrets)
+All configuration is now stored in `../Media Feed Secrets/` directory:
+- `secrets/db_password.txt` - Database password
+- `secrets/redis_password.txt` - Redis password
+- `.env` - Environment variables
+- `config/secrets.json` - Full configuration JSON
   "redis": {
     "password": "",
     "host": "localhost",
@@ -169,6 +165,7 @@ Get-Service postgresql*
 Start-Service postgresql-x64-18
 
 # Test connection with psql
+# Password from: ../Media Feed Secrets/secrets/db_password.txt
 & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U mefeed_admin -d mefed -h localhost -W
 ```
 

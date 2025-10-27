@@ -9,7 +9,7 @@ from app.db.base import get_db
 from app.db.models import User, UserSession
 from app.schemas.auth import (
     UserCreate, UserLogin, TokenResponse, TokenRefresh,
-    UserResponse, SessionResponse
+    UserResponse, SessionResponse, PasswordResetRequest, PasswordResetConfirm
 )
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user
@@ -234,3 +234,85 @@ async def revoke_session(
         )
 
     return {"message": "Session revoked successfully"}
+
+
+@router.post("/verify-email", response_model=dict)
+async def verify_email(
+    verification_data: EmailVerification,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Verify user's email address with verification token
+    """
+    success = await AuthService.verify_email(db, verification_data.token)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+    
+    return {"message": "Email verified successfully"}
+
+
+@router.post("/resend-verification", response_model=dict)
+@limiter.limit("3/hour")
+async def resend_verification(
+    request: Request,
+    reset_data: PasswordResetRequest,  # Using same schema for email
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Resend email verification link
+    """
+    success = await AuthService.resend_verification_email(db, reset_data.email)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User not found or email already verified"
+        )
+    
+    return {"message": "Verification email sent"}
+
+
+@router.post("/reset-password", response_model=dict)
+@limiter.limit("5/hour")
+async def reset_password(
+    request: Request,
+    reset_data: PasswordResetRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Request password reset via email
+    """
+    success = await AuthService.send_password_reset_email(db, reset_data.email)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User not found"
+        )
+    
+    return {"message": "Password reset email sent"}
+
+
+@router.post("/confirm-reset-password", response_model=dict)
+async def confirm_reset_password(
+    reset_data: PasswordResetConfirm,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Confirm password reset with token and new password
+    """
+    success = await AuthService.confirm_password_reset(
+        db, reset_data.token, reset_data.new_password
+    )
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    return {"message": "Password reset successfully"}

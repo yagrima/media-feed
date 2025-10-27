@@ -12,19 +12,19 @@
 ### 1. Redis mit Passwort-Authentifizierung ✅
 
 **Konfiguration:**
-- Passwort: `kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r` (48-Zeichen alphanumerisch)
+- Passwort: Wird über Docker-Secret `redis_password` geladen (siehe `MEFEED_SECRETS_DIR`)
 - Auth-Methode: `requirepass` via command-line
 - Healthcheck: Mit Passwort-Authentifizierung
 
 **Test:**
 ```bash
-docker-compose exec redis redis-cli -a kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r ping
+docker-compose exec redis sh -c "redis-cli -a \$(cat /run/secrets/redis_password) ping"
 # Output: PONG ✅
 ```
 
 **Redis Keys Check:**
 ```bash
-docker-compose exec redis redis-cli -a kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r KEYS "*"
+docker-compose exec redis sh -c "redis-cli -a \$(cat /run/secrets/redis_password) KEYS '*'"
 # Output: LIMITS:LIMITER/rate_limit:ip:172.21.0.1//api/auth/register/5/1/hour ✅
 ```
 
@@ -32,7 +32,7 @@ docker-compose exec redis redis-cli -a kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMX
 
 **Konfiguration:**
 - User: `mefeed_user`
-- Password: `mefeed_pass_2024`
+- Password: via Docker-Secret `db_password`
 - Database: `mefeed`
 - Auth: SCRAM-SHA-256 (funktioniert perfekt Docker-intern)
 
@@ -115,17 +115,7 @@ Body: {"email":"test@example.com","password":"TestPass123!"}
 
 ### 1. `.env` - Docker Internal Network
 
-**Vorher:**
-```env
-DATABASE_URL=postgresql+asyncpg://mefeed_user:mefeed_pass_2024@localhost:5432/mefeed
-REDIS_URL=redis://:kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r@localhost:6379
-```
-
-**Nachher:**
-```env
-DATABASE_URL=postgresql+asyncpg://mefeed_user:mefeed_pass_2024@db:5432/mefeed
-REDIS_URL=redis://:kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r@redis:6379
-```
+**Vorher/Nachher:** `.env` verweist nicht mehr auf fest verdrahtete Passwörter, sondern nutzt Werte aus `MEFEED_SECRETS_DIR`.
 
 **Reason:** Docker-interne Hostnamen für Container-zu-Container-Kommunikation.
 
@@ -135,9 +125,9 @@ REDIS_URL=redis://:kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r@redis:6379
 ```yaml
 redis:
   image: redis:7-alpine
-  command: redis-server --requirepass kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r
+  command: /bin/sh -c "redis-server --requirepass $$(cat /run/secrets/redis_password)"
   healthcheck:
-    test: ["CMD", "redis-cli", "-a", "kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r", "ping"]
+    test: ["CMD-SHELL", "redis-cli -a $$(cat /run/secrets/redis_password) ping"]
 ```
 
 ### 3. `secrets/` Directory Files
@@ -266,7 +256,7 @@ docker-compose exec db psql -U mefeed_user -d mefeed
 
 ### Redis AUTH Failed
 ```bash
-docker-compose exec redis redis-cli -a kN7R4xWvE2sDcF9TpYqh6LmGzJ8Kb3Ua5Hn1VtwMXQ0r ping
+docker-compose exec redis sh -c "redis-cli -a \$(cat /run/secrets/redis_password) ping"
 # Sollte PONG zurückgeben
 ```
 
@@ -283,7 +273,7 @@ docker-compose restart db
 
 ### Redis Authentication: ✅ ENABLED
 - 48-Zeichen alphanumerisches Passwort
-- Passwort in docker-compose.yml und .env konfiguriert
+- Passwort über Docker-Secrets konfiguriert (`redis_password`)
 - Healthcheck mit Passwort
 
 ### Database Authentication: ✅ SCRAM-SHA-256
