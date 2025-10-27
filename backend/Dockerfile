@@ -22,12 +22,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code first
+# Copy application code (includes railway-entrypoint.sh)
+ARG CACHEBUST=1
 COPY --chown=appuser:appuser . .
 
-# Copy entrypoint script and set permissions (as root)
-# Cache bust: 2025-10-27
-COPY --chown=appuser:appuser railway-entrypoint.sh /app/railway-entrypoint.sh
+# Set entrypoint script permissions
 RUN chmod +x /app/railway-entrypoint.sh
 
 # Switch to non-root user
