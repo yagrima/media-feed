@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (includes railway-entrypoint.sh)
-ARG CACHEBUST=1
+ARG CACHEBUST=2
 COPY --chown=appuser:appuser backend/ .
 
 # Set entrypoint script permissions
