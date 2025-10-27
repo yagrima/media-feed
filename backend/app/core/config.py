@@ -9,16 +9,24 @@ from pathlib import Path
 from .config_loader import config
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_SECRETS_DIR = Path(
-    os.getenv(
-        "MEFEED_SECRETS_DIR",
-        PROJECT_ROOT.parent / "Media Feed Secrets" / "secrets"
-    )
-).resolve(strict=False)
-DEFAULT_ENV_FILE = Path(
-    os.getenv("MEFEED_ENV_FILE", DEFAULT_SECRETS_DIR / ".env")
-).resolve(strict=False)
+# For Railway/Production: Use environment-specified paths or /tmp/secrets
+# For local dev: Use relative path to Media Feed Secrets
+if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("JWT_PRIVATE_KEY_PATH"):
+    # Production environment (Railway)
+    DEFAULT_SECRETS_DIR = Path("/tmp/secrets")
+    DEFAULT_ENV_FILE = Path("/tmp/.env")
+else:
+    # Local development
+    PROJECT_ROOT = Path(__file__).resolve().parents[4]
+    DEFAULT_SECRETS_DIR = Path(
+        os.getenv(
+            "MEFEED_SECRETS_DIR",
+            PROJECT_ROOT.parent / "Media Feed Secrets" / "secrets"
+        )
+    ).resolve(strict=False)
+    DEFAULT_ENV_FILE = Path(
+        os.getenv("MEFEED_ENV_FILE", DEFAULT_SECRETS_DIR / ".env")
+    ).resolve(strict=False)
 
 
 class Settings(BaseSettings):
