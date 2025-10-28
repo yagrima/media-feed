@@ -82,7 +82,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = config.get('security.secret_key', '')
 
     # CORS & Security
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://proud-courtesy-production-992b.up.railway.app"
     ALLOWED_HOSTS: str = "localhost,127.0.0.1"
 
     # Rate Limiting
