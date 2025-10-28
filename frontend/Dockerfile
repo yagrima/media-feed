@@ -5,7 +5,7 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 
 # Install dependencies
-COPY package.json package-lock.json* ./
+COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm ci --legacy-peer-deps
 
 # Stage 2: Builder
@@ -14,7 +14,7 @@ WORKDIR /app
 
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY frontend/ .
 
 # Build Next.js app
 ENV NEXT_TELEMETRY_DISABLED=1
