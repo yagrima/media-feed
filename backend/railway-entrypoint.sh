@@ -7,31 +7,20 @@ echo "Railway Entrypoint: Setting up secrets..."
 SECRETS_DIR="/tmp/secrets"
 mkdir -p "$SECRETS_DIR"
 
-# Write JWT keys from environment variables to files
-if [ -n "$JWT_PRIVATE_KEY" ]; then
-    echo "$JWT_PRIVATE_KEY" > "$SECRETS_DIR/jwt_private.pem"
-    echo "JWT private key written to file"
-else
-    echo "ERROR: JWT_PRIVATE_KEY environment variable not set"
-    exit 1
+"${PRINTF_BIN:-printf}" '%b' "${JWT_PRIVATE_KEY:?ERROR: JWT_PRIVATE_KEY environment variable not set}" > "$SECRETS_DIR/jwt_private.pem"
+"${PRINTF_BIN:-printf}" '%b' "${JWT_PUBLIC_KEY:?ERROR: JWT_PUBLIC_KEY environment variable not set}" > "$SECRETS_DIR/jwt_public.pem"
+
+# Basic sanity check: enforce PKCS#8 private key format
+if grep -q "^-----BEGIN RSA PRIVATE KEY-----" "$SECRETS_DIR/jwt_private.pem"; then
+  echo "ERROR: JWT_PRIVATE_KEY is PKCS#1 (BEGIN RSA PRIVATE KEY). Provide PKCS#8 (BEGIN PRIVATE KEY)."
+  exit 1
 fi
 
-if [ -n "$JWT_PUBLIC_KEY" ]; then
-    echo "$JWT_PUBLIC_KEY" > "$SECRETS_DIR/jwt_public.pem"
-    echo "JWT public key written to file"
-else
-    echo "ERROR: JWT_PUBLIC_KEY environment variable not set"
-    exit 1
-fi
+# Tighten permissions
+chmod 600 "$SECRETS_DIR/jwt_private.pem" "$SECRETS_DIR/jwt_public.pem" || true
 
-# Write encryption key
-if [ -n "$ENCRYPTION_KEY" ]; then
-    echo "$ENCRYPTION_KEY" > "$SECRETS_DIR/encryption.key"
-    echo "Encryption key written to file"
-else
-    echo "ERROR: ENCRYPTION_KEY environment variable not set"
-    exit 1
-fi
+"${PRINTF_BIN:-printf}" '%b' "${ENCRYPTION_KEY:?ERROR: ENCRYPTION_KEY environment variable not set}" > "$SECRETS_DIR/encryption.key"
+chmod 600 "$SECRETS_DIR/encryption.key" || true
 
 # Set environment variables to point to these temporary files
 export JWT_PRIVATE_KEY_PATH="$SECRETS_DIR/jwt_private.pem"
