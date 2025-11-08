@@ -322,7 +322,13 @@ export default function ImportPage() {
               <p className="text-muted-foreground text-center mb-6 max-w-md">
                 Lade deine Netflix Verlaufs-CSV-Datei hoch (Max. 10MB)
               </p>
-              <Button type="button" onClick={(e) => e.stopPropagation()}>
+              <Button 
+                type="button" 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  document.getElementById('file-upload')?.click()
+                }}
+              >
                 Datei auswählen
               </Button>
             </div>
