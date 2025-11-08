@@ -108,8 +108,18 @@ class Settings(BaseSettings):
     # API Keys
     RAPIDAPI_KEY: str = config.get('api_keys.rapidapi', '')
     RAPIDAPI_HOST: str = ""
-    TMDB_API_KEY: str = config.get('api_keys.tmdb', '')
+    TMDB_API_KEY: str = ""  # Read from environment variable or config file
     API_KEY_ROTATION_DAYS: int = 90
+    
+    @field_validator('TMDB_API_KEY', mode='before')
+    @classmethod
+    def load_tmdb_key(cls, v):
+        """Load TMDB API key from environment or config"""
+        # Environment variable takes precedence
+        if v:
+            return v
+        # Fallback to config file
+        return config.get('api_keys.tmdb', '')
 
     # Job Scheduling
     MEDIA_UPDATE_INTERVAL: str = "weekly"
