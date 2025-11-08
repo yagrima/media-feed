@@ -171,11 +171,11 @@ function MediaCard({ userMedia }: { userMedia: UserMedia }) {
   const Icon = media.type === 'movie' ? Film : Tv
 
   // Show episode count only for TV series
-  // Use nullish coalescing to handle 0 and undefined cases
+  // Display watched episodes count (total episodes would require TMDB API integration)
   const episodeCount = media.type === 'tv_series' && media.watched_episodes_count != null
-    ? `${media.watched_episodes_count}/XX`
+    ? `${media.watched_episodes_count} episodes`
     : media.type === 'tv_series'
-    ? '?/XX' // Fallback if count not available yet (no extra parentheses)
+    ? '? episodes' // Fallback if count not available yet
     : null
 
   const handleClick = () => {
