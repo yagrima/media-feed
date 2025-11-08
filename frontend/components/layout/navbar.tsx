@@ -51,7 +51,7 @@ export function Navbar() {
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
-              const showBadge = item.href === '/notifications' && unreadNotifications && unreadNotifications > 0
+              const showBadge = item.href === '/notifications' && unreadNotifications > 0
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
