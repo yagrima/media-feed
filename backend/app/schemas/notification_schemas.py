@@ -15,17 +15,17 @@ class NotificationResponse(BaseModel):
     title: str
     message: str
     media_id: Optional[UUID] = None
-    sequel_id: Optional[UUID] = None
-    read: bool
-    emailed: bool
-    data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")  # Frontend expects "data"
+    sequel_id: Optional[UUID] = Field(None, alias="related_media_id")  # Database uses related_media_id
+    read: bool = Field(alias="is_read")  # Database uses is_read
+    emailed: bool = Field(alias="is_emailed")  # Database uses is_emailed
+    data: Dict[str, Any] = Field(default_factory=dict, alias="notification_metadata")  # Frontend expects "data", DB has "notification_metadata"
     created_at: datetime
     read_at: Optional[datetime] = None
     emailed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True  # Pydantic v2 (was orm_mode in v1)
-        populate_by_name = True  # Allow using both "data" and "metadata"
+        populate_by_name = True  # Allow using both "data" and "metadata", "sequel_id" and "related_media_id"
 
 
 class NotificationListResponse(BaseModel):

@@ -279,7 +279,7 @@ class Notification(Base):
 
     # Related media
     media_id = Column(UUID(as_uuid=True), ForeignKey("media.id", ondelete="CASCADE"), nullable=True)
-    sequel_id = Column(UUID(as_uuid=True), ForeignKey("media.id", ondelete="SET NULL"), nullable=True)
+    related_media_id = Column(UUID(as_uuid=True), ForeignKey("media.id", ondelete="SET NULL"), nullable=True)  # Sequel/related content
 
     # Status tracking
     is_read = Column(Boolean, default=False, nullable=False)
@@ -300,7 +300,7 @@ class Notification(Base):
     # Relationships
     user = relationship("User", back_populates="notifications")
     media = relationship("Media", foreign_keys=[media_id])
-    sequel = relationship("Media", foreign_keys=[sequel_id])
+    related_media = relationship("Media", foreign_keys=[related_media_id])  # Sequel/related content
 
     __table_args__ = (
         Index('idx_notifications_user_read', 'user_id', 'is_read', 'created_at'),
