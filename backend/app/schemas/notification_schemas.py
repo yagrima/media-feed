@@ -18,13 +18,14 @@ class NotificationResponse(BaseModel):
     sequel_id: Optional[UUID] = None
     read: bool
     emailed: bool
-    metadata: Dict[str, Any] = {}
+    data: Dict[str, Any] = Field(default_factory=dict, alias="metadata")  # Frontend expects "data"
     created_at: datetime
     read_at: Optional[datetime] = None
     emailed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True  # Pydantic v2 (was orm_mode in v1)
+        populate_by_name = True  # Allow using both "data" and "metadata"
 
 
 class NotificationListResponse(BaseModel):

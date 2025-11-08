@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 
-@router.get("", response_model=NotificationListResponse)
+@router.get("")
 async def get_notifications(
     request: Request,
     unread_only: bool = Query(False, description="Filter for unread notifications only"),
@@ -60,14 +60,6 @@ async def get_notifications(
             detail=f"Rate limit exceeded. Retry after {retry_after} seconds."
         )
 
-    # Get notifications
-    notifications = notification_service.get_user_notifications(
-        user_id=current_user.id,
-        unread_only=unread_only,
-        limit=page_size,
-        offset=offset
-    )
-
     # Get notifications list
     notifications = await notification_service.get_user_notifications(
         user_id=current_user.id,
@@ -76,17 +68,23 @@ async def get_notifications(
         offset=offset
     )
 
-    # Get total count and unread count
-    total_count = len(notifications) + (page - 1) * page_size  # Simplified for now
-    unread_count = len([n for n in notifications if n.read_at is None])
-
-    return NotificationListResponse(
-        notifications=[NotificationResponse.from_orm(n) for n in notifications],
-        total=total_count,
-        unread_count=unread_count,
-        page=page,
-        page_size=page_size
+    # Get total count (query all to get accurate count - can be optimized later with COUNT query)
+    all_notifications = await notification_service.get_user_notifications(
+        user_id=current_user.id,
+        unread_only=False,
+        limit=10000,  # Large number to get all
+        offset=0
     )
+    total_count = len(all_notifications)
+    unread_count = len([n for n in all_notifications if n.read_at is None])
+
+    return {
+        "items": [NotificationResponse.from_orm(n).dict() for n in notifications],
+        "total": total_count,
+        "unread_count": unread_count,
+        "page": page,
+        "limit": page_size
+    }
 
 
 @router.get("/unread", response_model=UnreadCountResponse)
