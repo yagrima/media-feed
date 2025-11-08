@@ -69,10 +69,10 @@ export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
   return (
     <div className="space-y-4">
       {!selectedFile ? (
-        <Card
+        <div
           {...getRootProps()}
           className={cn(
-            'border-2 border-dashed cursor-pointer transition-colors hover:border-primary/50',
+            'border-2 border-dashed rounded-lg cursor-pointer transition-colors hover:border-primary/50 bg-card',
             isDragActive && 'border-primary bg-primary/5'
           )}
         >
@@ -92,7 +92,7 @@ export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
             </p>
             <p className="text-xs text-muted-foreground mt-2">Max file size: 10MB</p>
           </div>
-        </Card>
+        </div>
       ) : (
         <Card className="p-4">
           <div className="flex items-center justify-between">
