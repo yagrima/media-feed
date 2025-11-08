@@ -43,6 +43,8 @@ echo "All secrets configured successfully"
 
 # Run database migrations
 echo "Running database migrations..."
+export PYTHONPATH=/app
+cd /app
 alembic upgrade head || {
   echo "ERROR: Database migration failed"
   exit 1
