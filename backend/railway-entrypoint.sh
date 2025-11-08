@@ -40,6 +40,15 @@ export JWT_PUBLIC_KEY_PATH="$SECRETS_DIR/jwt_public.pem"
 export ENCRYPTION_KEY_PATH="$SECRETS_DIR/encryption.key"
 
 echo "All secrets configured successfully"
+
+# Run database migrations
+echo "Running database migrations..."
+alembic upgrade head || {
+  echo "ERROR: Database migration failed"
+  exit 1
+}
+echo "Migrations completed successfully"
+
 echo "Starting application on port ${PORT:-8000}..."
 
 # Start the application
