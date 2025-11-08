@@ -29,6 +29,8 @@ class MediaResponse(MediaBase):
     id: UUID
     created_at: datetime
     watched_episodes_count: Optional[int] = None  # Number of watched episodes for TV series
+    total_episodes: Optional[int] = None  # Total episodes from TMDB (for TV series)
+    total_seasons: Optional[int] = None  # Total seasons from TMDB (for TV series)
 
     class Config:
         from_attributes = True

@@ -112,6 +112,8 @@ class TMDBClient:
             logger.error(f"TMDB API error during movie search: {e}")
             return []
 
+    @tmdb_rate_limit()
+    @tmdb_cached(ttl_seconds=604800)  # 7 day cache (episode counts don't change often)
     async def get_tv_details(self, tv_id: int) -> Optional[Dict[str, Any]]:
         """
         Get detailed information about a TV series.
@@ -190,6 +192,57 @@ class TMDBClient:
 
         except httpx.HTTPError as e:
             logger.error(f"TMDB API error getting movie details: {e}")
+            return None
+
+    async def get_series_episode_count(self, series_name: str, year: Optional[int] = None) -> Optional[Dict[str, int]]:
+        """
+        Get total episode count for a TV series.
+
+        Args:
+            series_name: Name of the TV series
+            year: Optional year for better matching
+
+        Returns:
+            Dictionary with 'total_seasons', 'total_episodes', 'tmdb_id' or None if not found
+        """
+        if not self.api_key:
+            logger.warning("TMDB API key not configured, cannot fetch episode counts")
+            return None
+
+        try:
+            # Search for the series
+            results = await self.search_tv(series_name, year)
+            if not results:
+                logger.info(f"TMDB: No results found for '{series_name}'")
+                return None
+
+            # Get first (best) match
+            best_match = results[0]
+            tv_id = best_match.get('id')
+            
+            # Get detailed info
+            details = await self.get_tv_details(tv_id)
+            if not details:
+                logger.warning(f"TMDB: Could not get details for TV ID {tv_id}")
+                return None
+
+            # Extract episode counts
+            total_seasons = details.get('number_of_seasons', 0)
+            total_episodes = details.get('number_of_episodes', 0)
+
+            if total_episodes > 0:
+                logger.info(f"TMDB: Found {total_episodes} episodes across {total_seasons} seasons for '{series_name}'")
+                return {
+                    'total_seasons': total_seasons,
+                    'total_episodes': total_episodes,
+                    'tmdb_id': tv_id
+                }
+            else:
+                logger.warning(f"TMDB: No episode data for '{series_name}'")
+                return None
+
+        except Exception as e:
+            logger.error(f"TMDB: Error fetching episode count for '{series_name}': {e}")
             return None
 
     async def find_best_match(

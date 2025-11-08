@@ -21,6 +21,8 @@ export interface Media {
   base_title?: string
   season_number?: number
   watched_episodes_count?: number
+  total_episodes?: number  // From TMDB
+  total_seasons?: number   // From TMDB
   created_at: string
 }
 

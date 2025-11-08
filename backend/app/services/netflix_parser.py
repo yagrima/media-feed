@@ -10,6 +10,10 @@ import uuid
 
 from app.db.models import Media, UserMedia
 from app.schemas.import_schemas import ImportSource
+from app.services.tmdb_client import get_tmdb_client
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class NetflixCSVParser:
@@ -347,4 +351,40 @@ class NetflixCSVParser:
         self.db.add(media)
         await self.db.flush()
 
+        # Fetch episode counts from TMDB for new TV series
+        if media_type == 'tv_series':
+            await self._enrich_with_tmdb_data(media)
+
         return media
+
+    async def _enrich_with_tmdb_data(self, media: Media) -> None:
+        """
+        Enrich media with TMDB episode counts
+        
+        Args:
+            media: Media object to enrich
+        """
+        # Skip if already has episode data
+        if media.total_episodes is not None:
+            return
+        
+        try:
+            tmdb_client = get_tmdb_client()
+            episode_data = await tmdb_client.get_series_episode_count(media.title)
+            
+            if episode_data:
+                media.total_seasons = episode_data['total_seasons']
+                media.total_episodes = episode_data['total_episodes']
+                media.tmdb_id = episode_data['tmdb_id']
+                media.last_tmdb_update = datetime.utcnow()
+                
+                logger.info(
+                    f"TMDB: Enriched '{media.title}' with {episode_data['total_episodes']} "
+                    f"episodes across {episode_data['total_seasons']} seasons"
+                )
+            else:
+                logger.info(f"TMDB: No episode data found for '{media.title}'")
+                
+        except Exception as e:
+            # Don't fail the import if TMDB lookup fails
+            logger.warning(f"TMDB: Failed to enrich '{media.title}': {e}")

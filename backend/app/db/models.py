@@ -91,6 +91,11 @@ class Media(Base):
     imdb_id = Column(String(20), nullable=True)
     platform = Column(String(50), nullable=True)  # Primary platform for this media
 
+    # TMDB episode counts (for TV series)
+    total_seasons = Column(Integer, nullable=True)
+    total_episodes = Column(Integer, nullable=True)
+    last_tmdb_update = Column(TIMESTAMP, nullable=True)
+
     # Platform and metadata stored as JSON
     platform_ids = Column(JSONB, default={}, nullable=False)
     media_metadata = Column(JSONB, default={}, nullable=False)
