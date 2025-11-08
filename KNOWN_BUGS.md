@@ -111,11 +111,12 @@ Changed display from confusing "1/XX" to clear "276 episodes" format. The "/XX" 
 ### Bug #3: File Selection Button Not Working
 **ID:** BUG-003  
 **Severity:** 🟢 LOW  
-**Status:** ✅ FIXED (Pending Verification)  
+**Status:** ✅ FIXED AND VERIFIED  
 **Found:** November 8, 2025  
 **Fixed:** November 8, 2025  
-**Commit:** 6a8e2fc  
-**Component:** Frontend - CSV Import  
+**Verified:** November 8, 2025  
+**Commits:** 6a8e2fc, ecd9a03, 227dfc5, 6d8306b (4 attempts)  
+**Component:** Frontend - Import Page  
 **Environment:** Production (Railway)
 
 **Description:**
@@ -145,12 +146,23 @@ The "Datei auswählen" (Choose File) button in CSV import page does not trigger 
 
 **Browser Tested:** Opera
 
-**Fix Applied:**
-Replaced `Card` component with native `<div>` element for the dropzone. The Card component was preventing click events from properly reaching the hidden file input. Same visual styling maintained with CSS classes.
+**Fix Applied (4 attempts):**
 
-**Verification Status:** Awaiting user testing after deployment
+**Attempt 1-3:** Modified CSVUploader component (wrong file - user doesn't use this component)
+- Replaced Card with div
+- Added explicit button with ref
+- Created separate file input
 
-**Resolution:** Changed component structure to ensure react-dropzone click-to-browse functionality works correctly.
+**Attempt 4 (SUCCESS):** Fixed actual Import Page the user sees
+- Button had `stopPropagation()` but didn't trigger file input
+- Added `document.getElementById('file-upload')?.click()` to button onClick
+- This was the correct file all along
+
+**Key Learning:** Always verify which file the user actually sees before making fixes.
+
+**Verification Status:** ✅ VERIFIED by user - button now opens file dialog
+
+**Resolution:** Button now directly triggers the hidden file input element on the Import page.
 
 ---
 
@@ -305,20 +317,22 @@ The `> 0` check is sufficient and returns a proper boolean.
 
 ## Bug Statistics
 
-**Total Active Bugs:** 0 (4 fixed, awaiting verification)  
+**Total Active Bugs:** 0 (4 fixed and verified)  
 **By Severity:**
-- 🔴 HIGH: 0 (1 fixed)
-- 🟡 MEDIUM: 0 (1 fixed)
-- 🟢 LOW: 0 (2 fixed)
+- 🔴 HIGH: 0 (1 fixed, verified)
+- 🟡 MEDIUM: 0 (1 fixed, verified)
+- 🟢 LOW: 0 (2 fixed, verified)
 
 **By Component:**
-- Frontend: 3 fixed (Navbar, Media Grid, CSV Uploader)
+- Frontend: 3 fixed (Navbar, Media Grid, Import Page)
 - Backend: 1 fixed (Notifications API)
 
 **All Fixes Deployed:** November 8, 2025  
-**Awaiting User Verification:** All 4 bugs  
+**All Fixes Verified:** November 8, 2025  
 **Blocking Core Features:** 0  
 **Blockers for Production:** 0
+
+**Status:** 🟢 **ALL BUGS RESOLVED - PRODUCTION STABLE**
 
 ---
 
