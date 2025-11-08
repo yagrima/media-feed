@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
 import { Upload, File, X } from 'lucide-react'
@@ -16,6 +16,7 @@ interface CSVUploaderProps {
 export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -43,7 +44,13 @@ export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
     },
     maxFiles: 1,
     multiple: false,
+    noClick: true, // Disable click on root, use button instead
+    noKeyboard: true,
   })
+
+  const handleBrowseClick = () => {
+    fileInputRef.current?.click()
+  }
 
   const handleUpload = async () => {
     if (!selectedFile) return
@@ -72,11 +79,11 @@ export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
         <div
           {...getRootProps()}
           className={cn(
-            'border-2 border-dashed rounded-lg cursor-pointer transition-colors hover:border-primary/50 bg-card',
+            'border-2 border-dashed rounded-lg transition-colors bg-card',
             isDragActive && 'border-primary bg-primary/5'
           )}
         >
-          <input {...getInputProps()} />
+          <input {...getInputProps({ ref: fileInputRef })} />
           <div className="flex flex-col items-center justify-center py-12 px-4">
             <Upload
               className={cn(
@@ -87,10 +94,13 @@ export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
             <p className="text-lg font-medium mb-2">
               {isDragActive ? 'Drop your CSV file here' : 'Upload Netflix CSV'}
             </p>
-            <p className="text-sm text-muted-foreground text-center">
-              Drag and drop your Netflix viewing history CSV file here, or click to browse
+            <p className="text-sm text-muted-foreground text-center mb-4">
+              Drag and drop your Netflix viewing history CSV file here
             </p>
-            <p className="text-xs text-muted-foreground mt-2">Max file size: 10MB</p>
+            <Button onClick={handleBrowseClick} variant="outline" type="button">
+              Datei auswählen
+            </Button>
+            <p className="text-xs text-muted-foreground mt-4">Max file size: 10MB</p>
           </div>
         </div>
       ) : (
