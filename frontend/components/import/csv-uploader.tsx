@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useRef } from 'react'
+import { useCallback, useState, useRef, ChangeEvent } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
 import { Upload, File, X } from 'lucide-react'
@@ -16,37 +16,52 @@ interface CSVUploaderProps {
 export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragActive, setIsDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const validateFile = (file: File): boolean => {
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB')
+      return false
+    }
+
+    // Validate file type
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Only CSV files are allowed')
+      return false
+    }
+
+    return true
+  }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
-    if (file) {
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB')
-        return
-      }
-
-      // Validate file type
-      if (!file.name.endsWith('.csv')) {
-        toast.error('Only CSV files are allowed')
-        return
-      }
-
+    if (file && validateFile(file)) {
       setSelectedFile(file)
     }
   }, [])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: {
       'text/csv': ['.csv'],
     },
     maxFiles: 1,
     multiple: false,
-    noClick: true, // Disable click on root, use button instead
+    noClick: true,
     noKeyboard: true,
+    onDragEnter: () => setIsDragActive(true),
+    onDragLeave: () => setIsDragActive(false),
+    onDropAccepted: () => setIsDragActive(false),
   })
+
+  const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && validateFile(file)) {
+      setSelectedFile(file)
+    }
+  }
 
   const handleBrowseClick = () => {
     fileInputRef.current?.click()
@@ -83,7 +98,15 @@ export function CSVUploader({ onUploadSuccess }: CSVUploaderProps) {
             isDragActive && 'border-primary bg-primary/5'
           )}
         >
-          <input {...getInputProps({ ref: fileInputRef })} />
+          <input {...getInputProps()} style={{ display: 'none' }} />
+          {/* Separate file input for button click - NOT controlled by dropzone */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
           <div className="flex flex-col items-center justify-center py-12 px-4">
             <Upload
               className={cn(
