@@ -8,7 +8,8 @@ import { cn } from '@/lib/utils'
 import { authApi } from '@/lib/api/auth'
 import { tokenManager } from '@/lib/auth/token-manager'
 import toast from 'react-hot-toast'
-import { Film, Upload, Library, LogOut, Bell, Settings } from 'lucide-react'
+import { Film, Upload, Library, LogOut, Bell, Settings, User } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 const navItems = [
   { href: '/library', label: 'Library', icon: Library },
@@ -20,6 +21,7 @@ const navItems = [
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { user } = useAuth()
 
   // Simple badge state (can be enhanced later)
   const unreadNotifications = 0
@@ -71,11 +73,20 @@ export function Navbar() {
             })}
           </div>
 
-          {/* Logout Button */}
-          <Button variant="ghost" onClick={handleLogout} className="flex items-center space-x-2">
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </Button>
+          {/* User Indicator and Logout */}
+          <div className="flex items-center space-x-2">
+            {user && (
+              <div className="flex items-center space-x-2 px-3 py-2 rounded-md bg-muted/50">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{user.email}</span>
+              </div>
+            )}
+            {/* Logout Button */}
+            <Button variant="ghost" onClick={handleLogout} className="flex items-center space-x-2">
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </div>
         </div>
       </div>
     </nav>

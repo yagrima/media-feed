@@ -49,6 +49,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
+    // CRITICAL: Clear any existing tokens FIRST (prevents token conflicts)
+    clearTokens();
+    setUser(null);
+
     const response = await apiClient.post('/api/auth/login', {
       email,
       password,
@@ -63,6 +67,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (email: string, password: string) => {
+    // CRITICAL: Clear any existing tokens FIRST (prevents old account access)
+    clearTokens();
+    setUser(null);
+
     const response = await apiClient.post('/api/auth/register', {
       email,
       password,
