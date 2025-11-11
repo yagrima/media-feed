@@ -20,7 +20,7 @@ def upgrade():
     # Create audible_auth table for storing encrypted Audible API tokens
     op.create_table(
         'audible_auth',
-        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('uuid_generate_v4()')),
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
         sa.Column('user_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
         sa.Column('encrypted_token', sa.Text(), nullable=False, comment='AES-256 encrypted Audible auth token'),
         sa.Column('marketplace', sa.String(10), nullable=False, comment='Audible marketplace: us, uk, de, etc.'),
