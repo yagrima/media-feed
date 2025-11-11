@@ -365,3 +365,21 @@ The `> 0` check is sufficient and returns a proper boolean.
 - `RAILWAY_PRODUCTION_TEST_RESULTS.md` - Full test report
 - `PROJECT_STATUS.md` - Overall project status
 - `CURRENT_STATUS.md` - Current deployment status
+
+
+---
+
+## ?? CRITICAL SECURITY BUG
+
+### BUG-005: Session Token Reuse After Logout + New Registration
+**Priority:** ?? **CRITICAL**
+**Status:** ?? **OPEN** - Found November 9, 2025
+**Severity:** Security vulnerability - Cross-account access
+
+When a user logs out and immediately creates a new account, they are logged into the PREVIOUS account instead of the new one.
+
+**MUST FIX BEFORE MULTI-USER PRODUCTION USE**
+
+See: SECURITY_BUG_SESSION_REUSE.md for full investigation details.
+
+**Related:** FR-003 - Need to show logged-in user email/name in UI navbar
