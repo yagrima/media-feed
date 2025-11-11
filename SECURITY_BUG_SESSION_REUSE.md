@@ -189,28 +189,31 @@ async def test_logout_clears_session():
 ## 📋 Related Improvements
 
 ### FR-003: Show Logged-In User in UI
-**Priority:** HIGH (related to this bug)
+**Priority:** HIGH (related to this bug)  
+**Status:** ✅ **ALREADY IMPLEMENTED**
 
-**Problem:** No way to see which user is logged in, making this bug harder to notice.
+**Implementation Details:**
+- Navbar shows user email from AuthContext (`user.email`)
+- User icon (Lucide User icon) displayed next to email
+- Styled with muted background container
+- Located in top-right corner of navbar
+- Logout button next to user display
 
-**Solution:** Add user email/name to navbar
-- Show user avatar/email in top-right corner
-- Add dropdown with:
-  - User profile
-  - Settings
-  - Logout
-
-**Files to Modify:**
-- `frontend/components/layout/navbar.tsx`
-- `frontend/lib/auth/auth-context.tsx` - Ensure user info available
-
-**Mockup:**
+**Current Implementation:**
+```typescript
+// In frontend/components/layout/navbar.tsx (lines 82-87)
+{user && (
+  <div className="flex items-center space-x-2 px-3 py-2 rounded-md bg-muted/50">
+    <User className="h-4 w-4 text-muted-foreground" />
+    <span className="text-sm text-muted-foreground">{user.email}</span>
+  </div>
+)}
 ```
-[Logo]  Library  Dashboard  Notifications     [user@example.com ▼]
-                                               └─ Profile
-                                               └─ Settings
-                                               └─ Logout
-```
+
+**Benefits Achieved:**
+- ✅ Users can immediately see which account they're logged in as
+- ✅ Helps identify cross-account access issues
+- ✅ Clear visual confirmation of authentication state
 
 ---
 
