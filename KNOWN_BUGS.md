@@ -401,4 +401,4 @@ Tested in production via API (November 11, 2025):
 
 See: SECURITY_BUG_SESSION_REUSE.md for full investigation details.
 
-**Related:** FR-003 - Need to show logged-in user email/name in UI navbar
+**Related:** FR-003 - User display in navbar (✅ ALREADY IMPLEMENTED in navbar.tsx - shows user.email)
