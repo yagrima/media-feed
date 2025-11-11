@@ -1,7 +1,7 @@
 """
 Audible API Endpoints - Connect and manage Audible accounts
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Dict, Any
@@ -43,7 +43,8 @@ router = APIRouter(prefix="/api/audible", tags=["audible"])
 )
 @limiter.limit("3/hour")  # Strict rate limit for auth attempts
 async def connect_audible(
-    request: AudibleConnectRequest,
+    request: Request,
+    connect_request: AudibleConnectRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -83,9 +84,9 @@ async def connect_audible(
         # Authenticate with Audible (password only in memory during this call)
         auth_result = await audible_service.authenticate(
             user_id=current_user.id,
-            email=request.email,
-            password=request.password,  # Password discarded after authentication
-            marketplace=request.marketplace
+            email=connect_request.email,
+            password=connect_request.password,  # Password discarded after authentication
+            marketplace=connect_request.marketplace
         )
         
         # Password is now out of scope and will be garbage collected
@@ -198,6 +199,7 @@ async def connect_audible(
 )
 @limiter.limit("10/day")  # 10 syncs per day max
 async def sync_audible_library(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
