@@ -1,15 +1,21 @@
 'use client'
 
 import * as Sentry from "@sentry/nextjs"
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { authApi } from '@/lib/api/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { User, Mail, Calendar, Shield, Loader2, Bell, Bug } from 'lucide-react'
+import { User, Mail, Calendar, Shield, Loader2, Bell, Bug, BookOpen } from 'lucide-react'
 import Link from 'next/link'
+import { ConnectAudibleModal } from '@/components/audible/connect-audible-modal'
+import { AudibleStatusCard } from '@/components/audible/audible-status-card'
+import { useToast } from '@/hooks/use-toast'
 
 export default function SettingsPage() {
+  const { toast } = useToast()
+  const [showAudibleModal, setShowAudibleModal] = useState(false)
   const { data: user, isLoading } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => authApi.me(),
@@ -145,6 +151,37 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Audible Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Audible Integration
+          </CardTitle>
+          <CardDescription>
+            Verwalte deine Audible-Kontoverbindung
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AudibleStatusCard 
+            onConnect={() => setShowAudibleModal(true)}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Audible Connection Modal */}
+      <ConnectAudibleModal
+        open={showAudibleModal}
+        onClose={() => setShowAudibleModal(false)}
+        onSuccess={(data) => {
+          toast({
+            title: "Erfolgreich verbunden!",
+            description: `${data.books_imported} Hörbücher von Audible importiert.`,
+          })
+          setShowAudibleModal(false)
+        }}
+      />
 
       {/* Debug Section (Development Only) */}
       {process.env.NODE_ENV === 'development' && (

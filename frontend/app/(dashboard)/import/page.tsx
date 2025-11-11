@@ -8,9 +8,13 @@ import { Upload, ArrowLeft, FileText, CheckCircle2 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { useImport } from '@/lib/import-context'
 import { useRouter } from 'next/navigation'
+import { ConnectAudibleModal } from '@/components/audible/connect-audible-modal'
+import { AudibleStatusCard } from '@/components/audible/audible-status-card'
+import { useToast } from '@/hooks/use-toast'
 
 export default function ImportPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const { setCurrentJobId } = useImport()
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -19,6 +23,7 @@ export default function ImportPage() {
   const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string; jobId?: string } | null>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
   const dragCounterRef = useRef(0)
+  const [showAudibleModal, setShowAudibleModal] = useState(false)
 
   // File upload handler
   const handleFileUpload = useCallback(async (file: File) => {
@@ -375,6 +380,36 @@ export default function ImportPage() {
           </div>
         </div>
       )}
+
+      {/* Audible Integration Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Audible Audiobooks importieren</CardTitle>
+          <CardDescription>
+            Verbinde dein Audible-Konto, um deine Hörbuch-Bibliothek automatisch zu importieren
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AudibleStatusCard 
+            onConnect={() => setShowAudibleModal(true)}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Audible Connection Modal */}
+      <ConnectAudibleModal
+        open={showAudibleModal}
+        onClose={() => setShowAudibleModal(false)}
+        onSuccess={(data) => {
+          toast({
+            title: "Erfolgreich verbunden!",
+            description: `${data.books_imported} Hörbücher von Audible importiert.`,
+          })
+          setShowAudibleModal(false)
+          // Optionally refresh the page or status
+          router.refresh()
+        }}
+      />
     </div>
   )
 }
