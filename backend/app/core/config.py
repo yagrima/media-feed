@@ -111,6 +111,10 @@ class Settings(BaseSettings):
     TMDB_API_KEY: str = ""  # Read from environment variable or config file
     API_KEY_ROTATION_DAYS: int = 90
     
+    # Error Tracking
+    SENTRY_DSN: str = ""
+    ENVIRONMENT: str = "production"
+    
     @field_validator('TMDB_API_KEY', mode='before')
     @classmethod
     def load_tmdb_key(cls, v):

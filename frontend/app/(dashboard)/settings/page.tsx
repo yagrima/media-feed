@@ -1,11 +1,12 @@
 'use client'
 
+import * as Sentry from "@sentry/nextjs"
 import { useQuery } from '@tanstack/react-query'
 import { authApi } from '@/lib/api/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { User, Mail, Calendar, Shield, Loader2, Bell } from 'lucide-react'
+import { User, Mail, Calendar, Shield, Loader2, Bell, Bug } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SettingsPage() {
@@ -144,6 +145,39 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Debug Section (Development Only) */}
+      {process.env.NODE_ENV === 'development' && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-900">
+              <Bug className="h-5 w-5" />
+              Debug Tools (Development Only)
+            </CardTitle>
+            <CardDescription className="text-orange-700">
+              Test error tracking and monitoring
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium mb-2 text-orange-900">Test Sentry Error Tracking</p>
+              <p className="text-sm text-orange-700 mb-2">
+                Click to trigger a test error and verify Sentry integration
+              </p>
+              <Button 
+                variant="destructive"
+                onClick={() => {
+                  Sentry.captureMessage("Test error from Settings page!")
+                  throw new Error("This is a test error for Sentry! Check your Sentry dashboard.")
+                }}
+              >
+                <Bug className="h-4 w-4 mr-2" />
+                Trigger Test Error
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

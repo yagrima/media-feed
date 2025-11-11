@@ -1,5 +1,6 @@
 'use client'
 
+import * as Sentry from "@sentry/nextjs"
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,6 +28,15 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
 
+    // Send error to Sentry
+    Sentry.captureException(error, {
+      contexts: {
+        react: {
+          componentStack: errorInfo.componentStack,
+        },
+      },
+    })
+
     if (this.props.onError) {
       this.props.onError(error, errorInfo)
     }
@@ -48,7 +58,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <CardHeader>
               <CardTitle className="text-red-600">Something went wrong</CardTitle>
               <CardDescription>
-                An unexpected error occurred. Please try again.
+                An unexpected error occurred. Our team has been notified. Please try again.
               </CardDescription>
             </CardHeader>
             <CardContent>

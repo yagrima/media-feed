@@ -9,6 +9,16 @@ import logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
+# Initialize Sentry error tracking
+from app.core.config import settings
+from app.core.sentry import init_sentry
+
+init_sentry(
+    dsn=settings.SENTRY_DSN,
+    environment=settings.ENVIRONMENT,
+    version=settings.APP_VERSION
+)
+
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -127,6 +137,15 @@ async def root():
         "version": settings.APP_VERSION,
         "docs": "/docs" if settings.DEBUG else "Documentation disabled in production"
     }
+
+
+# Sentry test endpoint (DEBUG only)
+if settings.DEBUG:
+    @app.get("/debug/sentry-test", tags=["debug"])
+    async def sentry_test():
+        """Test endpoint to verify Sentry error tracking (DEBUG only)"""
+        logger.info("Sentry test endpoint called - about to raise test exception")
+        raise Exception("This is a test error for Sentry! If you see this in Sentry dashboard, it's working!")
 
 
 # Include routers
