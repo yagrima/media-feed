@@ -20,6 +20,7 @@ class ImportStatus(str, Enum):
 class ImportSource(str, Enum):
     """Import source type"""
     NETFLIX_CSV = "netflix_csv"
+    AUDIBLE_API = "audible_api"
     MANUAL = "manual"
     API = "api"
 

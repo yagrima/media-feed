@@ -351,3 +351,35 @@ class NotificationPreferences(Base):
 
     def __repr__(self):
         return f"<NotificationPreferences for user {self.user_id}>"
+
+
+class AudibleAuth(Base):
+    """Audible account connection and authentication storage"""
+    __tablename__ = "audible_auth"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
+
+    # Encrypted authentication token (user-specific encryption)
+    encrypted_token = Column(Text, nullable=False)
+
+    # Marketplace and device info
+    marketplace = Column(String(10), nullable=False)  # us, uk, de, etc.
+    device_name = Column(String(255), nullable=True)
+
+    # Sync tracking
+    last_sync_at = Column(TIMESTAMP, nullable=True)
+
+    # Timestamps
+    created_at = Column(TIMESTAMP, default=datetime.utcnow, nullable=False)
+    updated_at = Column(TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", backref="audible_auth")
+
+    __table_args__ = (
+        Index('idx_audible_auth_user', 'user_id'),
+    )
+
+    def __repr__(self):
+        return f"<AudibleAuth user={self.user_id} marketplace={self.marketplace}>"
