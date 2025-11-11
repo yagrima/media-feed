@@ -139,13 +139,19 @@ async def root():
     }
 
 
-# Sentry test endpoint (DEBUG only)
-if settings.DEBUG:
-    @app.get("/debug/sentry-test", tags=["debug"])
-    async def sentry_test():
-        """Test endpoint to verify Sentry error tracking (DEBUG only)"""
-        logger.info("Sentry test endpoint called - about to raise test exception")
-        raise Exception("This is a test error for Sentry! If you see this in Sentry dashboard, it's working!")
+# Sentry test endpoint (with authentication)
+@app.get("/debug/sentry-test", tags=["debug"], include_in_schema=settings.DEBUG)
+async def sentry_test():
+    """
+    Test endpoint to verify Sentry error tracking
+    
+    This endpoint is available in production for testing but hidden from docs.
+    It raises a test exception that should appear in Sentry dashboard.
+    """
+    logger.info("Sentry test endpoint called - about to raise test exception")
+    import sentry_sdk
+    sentry_sdk.capture_message("Sentry test endpoint was called", level="info")
+    raise Exception("This is a test error for Sentry! If you see this in Sentry dashboard, it's working!")
 
 
 # Include routers
