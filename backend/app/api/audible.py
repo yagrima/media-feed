@@ -24,7 +24,7 @@ from app.schemas.audible_schemas import (
     AudibleStatusResponse,
     AudibleErrorResponse
 )
-from app.core.rate_limiter import limiter
+from app.core.middleware import limiter
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
