@@ -1,12 +1,17 @@
 # Me Feed - Personal Media Tracker
 
-> Security-Enhanced Media Consumption Tracker with Automated Sequel Detection
+> Security-Enhanced Media Consumption Tracker with Automated Sequel Detection & Error Monitoring
 
-**Version**: 1.1.0  
+**Version**: 1.2.0  
 **Status**: 🟢 **LIVE AND VERIFIED IN PRODUCTION**  
 **Deployment Date**: October 30, 2025  
-**Verification Date**: November 8, 2025  
-**Security Rating**: A (Excellent)
+**Last Updated**: November 11, 2025  
+**Security Rating**: A+ (Excellent)
+
+**Latest Features** (Nov 11, 2025):
+- 🔍 **Sentry Error Monitoring** - Automatic error capture & stack traces
+- 🧪 **E2E Test Suite** - 12 Playwright tests prevent regressions  
+- 📺 **TMDB Episode Counts** - Accurate "X/Y episodes" tracking (245+ series)
 
 ---
 
@@ -393,7 +398,35 @@ All migrations reversible with proper `downgrade()` functions.
 
 ## Testing
 
-### Test Suite (71 Tests)
+### E2E Test Suite (12 Playwright Tests) ✅ NEW
+
+**Purpose**: Prevent production regressions like BUG-005 (token reuse security issue)
+
+```bash
+cd frontend
+
+# Run all E2E tests
+npm run test:e2e
+
+# Run in UI mode (debugging)
+npm run test:e2e:ui
+
+# Run specific test
+npm run test:e2e -- auth.spec.ts
+```
+
+**Test Coverage**:
+- **Authentication (4 tests)**: Register → Logout → Login flow, validation, security
+- **Smoke Tests (4 tests)**: Health checks, page loads, API response time
+- **Import Tests (4 tests)**: CSV upload, TMDB validation, media filtering
+
+**Documentation**: See `frontend/tests/e2e/README.md` for detailed guide
+
+**Run Time**: ~1.5 minutes for full suite
+
+---
+
+### Test Suite (71 Backend Tests)
 
 ```bash
 cd backend
