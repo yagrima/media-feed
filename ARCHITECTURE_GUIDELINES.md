@@ -37,16 +37,43 @@
 
 ### General Principles
 
-#### NO EMOJIS
-**Critical Rule**: Never use emojis in:
+#### NO EMOJIS OR UNICODE CHARACTERS
+**CRITICAL RULE**: Never use emojis or Unicode characters in:
+- PowerShell scripts (.ps1 files) - **STRICTLY FORBIDDEN**
 - Source code
-- PowerShell scripts
 - Console output
 - Log messages
-- Comments
-- Documentation strings
+- Comments in code files
+- Script output messages
 
-**Reason**: Emojis cause encoding issues in PowerShell and can break scripts.
+**Forbidden Characters in PowerShell:**
+- ❌ Emojis: ✅ ✓ ❌ ✗ 🚀 🔍 ⚠️ ℹ️ etc.
+- ❌ Unicode symbols: → ➜ • ● ○ etc.
+- ❌ Special quotes: " " ' '
+- ❌ Any non-ASCII characters
+
+**Why This is Critical:**
+- PowerShell on Windows has severe encoding issues with Unicode
+- Causes parse errors: "The string is missing the terminator"
+- Script execution failures that waste hours of debugging
+- Has caused multiple production issues
+
+**Correct Approach for PowerShell:**
+```powershell
+# GOOD - ASCII only
+Write-Host "[OK] Operation completed" -ForegroundColor Green
+Write-Host "[ERROR] Failed to connect" -ForegroundColor Red
+Write-Host "[WARNING] Check configuration" -ForegroundColor Yellow
+Write-Host "Step 1/3 -> Processing..." -ForegroundColor Cyan
+
+# BAD - Contains Unicode (WILL BREAK)
+Write-Host "✅ Operation completed" -ForegroundColor Green
+Write-Host "❌ Failed to connect" -ForegroundColor Red  
+Write-Host "⚠️ Check configuration" -ForegroundColor Yellow
+Write-Host "Step 1/3 ➜ Processing..." -ForegroundColor Cyan
+```
+
+**Reason**: Emojis and Unicode cause encoding issues in PowerShell and will break scripts.
 
 **Correct**:
 ```powershell
