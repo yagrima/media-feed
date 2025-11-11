@@ -112,7 +112,7 @@ class Settings(BaseSettings):
     API_KEY_ROTATION_DAYS: int = 90
     
     # Error Tracking
-    SENTRY_DSN: str = ""
+    SENTRY_DSN: str = config.get('monitoring.sentry_dsn', '')
     ENVIRONMENT: str = "production"
     
     @field_validator('TMDB_API_KEY', mode='before')
