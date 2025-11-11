@@ -1,4 +1,4 @@
-# Known Bugs
+﻿# Known Bugs
 
 **Last Updated:** November 8, 2025  
 **Project:** Me Feed  
@@ -369,16 +369,35 @@ The `> 0` check is sufficient and returns a proper boolean.
 
 ---
 
-## ?? CRITICAL SECURITY BUG
+## CRITICAL SECURITY BUG - FIXED
 
-### BUG-005: Session Token Reuse After Logout + New Registration
-**Priority:** ?? **CRITICAL**
-**Status:** ?? **OPEN** - Found November 9, 2025
-**Severity:** Security vulnerability - Cross-account access
+### BUG-005: Session Token Reuse After Logout + New Registration  
+**Priority:** CRITICAL  
+**Status:** FIXED - Found Nov 9, 2025 | Fixed Nov 11, 2025  
+**Severity:** Security vulnerability - Cross-account access (RESOLVED)  
+**Fix Commit:** a1dc986  
 
-When a user logs out and immediately creates a new account, they are logged into the PREVIOUS account instead of the new one.
+**Problem:**  
+When a user logged out and immediately created a new account, they were logged into the PREVIOUS account instead of the new one.
 
-**MUST FIX BEFORE MULTI-USER PRODUCTION USE**
+**Root Cause:**  
+Login and Register pages bypassed AuthContext and used direct API calls, preventing proper token clearing before authentication.
+
+**Fix:**  
+- Modified login/register pages to use useAuth() hook instead of direct authApi calls
+- Added AuthProvider to Providers component (was missing from component tree)
+- AuthContext already had correct clearTokens() logic but wasn't being called
+
+**Verification:**  
+Tested in production via API (November 11, 2025):
+- User A registered -> Logged out -> User B registered
+- Verified /api/auth/me returns User B (not User A)
+- Cross-account access prevented
+
+**Files Changed:**  
+- frontend/app/(auth)/login/page.tsx
+- frontend/app/(auth)/register/page.tsx
+- frontend/components/providers.tsx
 
 See: SECURITY_BUG_SESSION_REUSE.md for full investigation details.
 
