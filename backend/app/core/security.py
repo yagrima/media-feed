@@ -206,6 +206,69 @@ class SecurityService:
         """
         return pwd_context.verify(token, token_hash)
 
+    def encrypt_user_specific_data(self, data: str, user_id: str) -> str:
+        """
+        Encrypt data with user-specific cipher (more secure for third-party credentials)
+        
+        Uses PBKDF2 to derive a user-specific cipher from base material and user ID.
+        Each user's data is encrypted with a unique cipher for isolation.
+
+        Args:
+            data: Plain text data to encrypt
+            user_id: User's UUID as string
+
+        Returns:
+            Encrypted data as base64 string
+        """
+        import hashlib
+        import base64
+        
+        # Derive user-specific cipher using PBKDF2
+        base_material = settings.encryption_key.decode() if isinstance(settings.encryption_key, bytes) else settings.encryption_key
+        user_salt = user_id.encode()
+        
+        # Generate 32-byte cipher using PBKDF2 with 100,000 iterations
+        computed_value = hashlib.pbkdf2_hmac('sha256', base_material.encode(), user_salt, 100000, dklen=32)
+        computed_b64 = base64.urlsafe_b64encode(computed_value)
+        
+        # Create Fernet cipher with computed value
+        user_fernet = Fernet(computed_b64)
+        
+        # Encrypt and return
+        encrypted = user_fernet.encrypt(data.encode())
+        return encrypted.decode()
+
+    def decrypt_user_specific_data(self, encrypted_data: str, user_id: str) -> str:
+        """
+        Decrypt data encrypted with user-specific cipher
+
+        Args:
+            encrypted_data: Encrypted data as base64 string
+            user_id: User's UUID as string
+
+        Returns:
+            Decrypted plain text
+
+        Raises:
+            cryptography.fernet.InvalidToken: If decryption fails
+        """
+        import hashlib
+        import base64
+        
+        # Derive same user-specific cipher
+        base_material = settings.encryption_key.decode() if isinstance(settings.encryption_key, bytes) else settings.encryption_key
+        user_salt = user_id.encode()
+        
+        computed_value = hashlib.pbkdf2_hmac('sha256', base_material.encode(), user_salt, 100000, dklen=32)
+        computed_b64 = base64.urlsafe_b64encode(computed_value)
+        
+        # Create Fernet cipher with computed value
+        user_fernet = Fernet(computed_b64)
+        
+        # Decrypt and return
+        decrypted = user_fernet.decrypt(encrypted_data.encode())
+        return decrypted.decode()
+
 
 # Global security service instance
 security_service = SecurityService()
