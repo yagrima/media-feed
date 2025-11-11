@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { useState } from 'react'
 import { ErrorBoundary } from './error-boundary'
+import { AuthProvider } from '@/lib/auth-context'
 import { ImportProvider, useImport } from '@/lib/import-context'
 import { ImportStatusBanner } from './import/import-status-banner'
 
@@ -43,10 +44,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ImportProvider>
-          <ImportBannerWrapper />
-          {children}
-        </ImportProvider>
+        <AuthProvider>
+          <ImportProvider>
+            <ImportBannerWrapper />
+            {children}
+          </ImportProvider>
+        </AuthProvider>
         <Toaster 
           position="bottom-left"
           toastOptions={{

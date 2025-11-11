@@ -11,8 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { authApi } from '@/lib/api/auth'
-import { tokenManager } from '@/lib/auth/token-manager'
+import { useAuth } from '@/lib/auth-context'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -23,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
   const {
@@ -36,20 +36,13 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     try {
-      const response = await authApi.login(data)
-
-      // Store tokens
-      tokenManager.setTokens(
-        response.access_token,
-        response.refresh_token,
-        response.expires_in
-      )
+      // Use AuthContext login function (includes clearTokens() before login)
+      await login(data.email, data.password)
 
       toast.success('Login successful!')
       router.push('/dashboard')
     } catch (error: any) {
-      // Error handling is done in the API client interceptor
-      // to ensure consistent toast display and duration
+      toast.error(error.response?.data?.detail || 'Login failed')
       console.error('Login error:', error)
     } finally {
       setIsLoading(false)

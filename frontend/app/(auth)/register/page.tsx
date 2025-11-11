@@ -11,8 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { authApi } from '@/lib/api/auth'
-import { tokenManager } from '@/lib/auth/token-manager'
+import { useAuth } from '@/lib/auth-context'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -32,6 +31,7 @@ type RegisterForm = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { register: registerUser } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
   const {
@@ -46,24 +46,12 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true)
     try {
-      // Backend now returns tokens on registration (auto-login)
-      const response = await authApi.register({
-        email: data.email,
-        password: data.password,
-      })
-
-      // Store tokens
-      tokenManager.setTokens(
-        response.access_token,
-        response.refresh_token,
-        response.expires_in
-      )
+      // Use AuthContext register function (includes clearTokens() before registration)
+      await registerUser(data.email, data.password)
       
       toast.success('Account created successfully! You are now logged in.')
-      // Redirect immediately - the auth context will load the user automatically
       router.push('/dashboard')
     } catch (error: any) {
-      // Error handling is done in the API client interceptor
       toast.error(error.response?.data?.detail || 'Registration failed')
       console.error('Registration error:', error)
     } finally {
