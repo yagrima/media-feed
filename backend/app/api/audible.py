@@ -7,9 +7,8 @@ from sqlalchemy import select, func
 from typing import Dict, Any
 import logging
 
-from app.db.database import get_async_db
+from app.core.dependencies import get_current_user, get_db
 from app.db.models import User, AudibleAuth, UserMedia, Media
-from app.core.auth import get_current_user
 from app.services.audible_service import (
     AudibleService,
     AudibleAuthError,
@@ -46,7 +45,7 @@ router = APIRouter(prefix="/api/audible", tags=["audible"])
 async def connect_audible(
     request: AudibleConnectRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Connect Audible account and import library
@@ -200,7 +199,7 @@ async def connect_audible(
 @limiter.limit("10/day")  # 10 syncs per day max
 async def sync_audible_library(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Sync Audible library
@@ -291,7 +290,7 @@ async def sync_audible_library(
 )
 async def disconnect_audible(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Disconnect Audible account
@@ -362,7 +361,7 @@ async def disconnect_audible(
 )
 async def get_audible_status(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get Audible connection status
