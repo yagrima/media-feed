@@ -4,7 +4,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import apiClient, { setTokens, clearTokens, isAuthenticated as checkAuth } from './api-client';
+import apiClient from './api-client';
+import { tokenManager } from './auth/token-manager';
 
 interface User {
   id: string;
@@ -32,13 +33,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Fetch current user on mount
   useEffect(() => {
     const fetchUser = async () => {
-      if (checkAuth()) {
+      if (tokenManager.isAuthenticated()) {
         try {
           const response = await apiClient.get('/api/auth/me');
           setUser(response.data);
         } catch (error) {
           console.error('Failed to fetch user:', error);
-          clearTokens();
+          tokenManager.clearTokens();
           setUser(null);
         }
       }
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     // CRITICAL: Clear any existing tokens FIRST (prevents token conflicts)
-    clearTokens();
+    tokenManager.clearTokens();
     setUser(null);
 
     const response = await apiClient.post('/api/auth/login', {
@@ -58,8 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
     });
 
-    const { access_token, refresh_token } = response.data;
-    setTokens(access_token, refresh_token);
+    const { access_token, refresh_token, expires_in } = response.data;
+    tokenManager.setTokens(access_token, refresh_token, expires_in);
 
     // Fetch user data
     const userResponse = await apiClient.get('/api/auth/me');
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (email: string, password: string) => {
     // CRITICAL: Clear any existing tokens FIRST (prevents old account access)
-    clearTokens();
+    tokenManager.clearTokens();
     setUser(null);
 
     const response = await apiClient.post('/api/auth/register', {
@@ -77,8 +78,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // Backend now returns tokens on registration (auto-login)
-    const { access_token, refresh_token } = response.data;
-    setTokens(access_token, refresh_token);
+    const { access_token, refresh_token, expires_in } = response.data;
+    tokenManager.setTokens(access_token, refresh_token, expires_in);
 
     // Fetch user data
     const userResponse = await apiClient.get('/api/auth/me');
@@ -91,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Logout API call failed:', error);
     } finally {
-      clearTokens();
+      tokenManager.clearTokens();
       setUser(null);
     }
   };
@@ -102,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(response.data);
     } catch (error) {
       console.error('Failed to fetch user:', error);
-      clearTokens();
+      tokenManager.clearTokens();
       setUser(null);
     }
   };
