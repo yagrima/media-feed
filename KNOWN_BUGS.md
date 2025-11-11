@@ -281,7 +281,64 @@ Automatically update the total episode count for TV series when new seasons are 
 
 ---
 
-### Bug #4: "Notifications0" Display in Navigation
+
+
+---
+
+### FR-004: Intelligent Comedy Special / Movie Detection
+**ID:** FR-004  
+**Priority:** LOWEST  
+**Category:** Enhancement / Import Intelligence  
+**Requested:** November 11, 2025  
+**Planned Sprint:** Future (Low Priority Backlog)
+
+**Problem:**
+Comedy specials and stand-up shows are often imported as "tv_series" from Netflix CSV data, but TMDB categorizes them as "movies". This causes:
+- TMDB episode count lookup to fail (searches only TV series)
+- Display shows "1 episodes" instead of being treated as a movie
+- Incorrect media type categorization
+
+**Example:**
+- "Felix Lobrecht LIVE - Kenn ick!" imported as TV Series
+- TMDB has it as Movie (ID: 707983)
+- Result: No TMDB data, shows "1 episodes"
+
+**Current Behavior:**
+- Import logic categorizes based on Netflix's internal structure
+- Backfill script only searches TMDB TV series endpoint
+- Comedy specials remain miscategorized
+
+**Proposed Solution:**
+Implement fallback logic in TMDB enrichment:
+1. Try TV series search first (current behavior)
+2. If no results AND episode count = 1, try movie search
+3. If found as movie, reclassify media type to "movie"
+4. Store movie data instead
+
+**Alternative Approaches:**
+- Heuristic Detection: If title contains "LIVE", "Stand-Up", "Comedy Special", treat as movie
+- User Correction: Allow manual reclassification in UI
+- TMDB Multi-Search: Use TMDB /search/multi endpoint (searches both TV and movies)
+
+**Benefits:**
+- More accurate media categorization
+- Better TMDB data coverage
+- Cleaner library organization
+- Correct display (no "1 episodes" for specials)
+
+**Estimated Effort:** 3-4 hours
+
+**Implementation Notes:**
+- Low priority because it affects only edge cases (comedy specials)
+- Core TMDB integration works perfectly for actual TV series
+- Workaround: Users can manually delete and re-import as movies
+
+**Files to Modify:**
+- backend/app/services/netflix_parser.py - Add movie fallback in _enrich_with_tmdb_data()
+- backend/app/services/tmdb_client.py - Add movie search method (if not exists)
+- Optional: Add media.type update logic if reclassification needed
+
+**Status:** Documented for future consideration - Not scheduled for implementation### Bug #4: "Notifications0" Display in Navigation
 **ID:** BUG-004  
 **Severity:** 🟢 LOW  
 **Status:** ✅ FIXED (Pending Verification)  
