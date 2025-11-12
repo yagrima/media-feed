@@ -4,7 +4,7 @@
  * Client functions for Audible integration endpoints
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import apiClient from './api-client';
 
 export interface AudibleConnectRequest {
   email: string;
@@ -61,35 +61,21 @@ class AudibleApiError extends Error {
   }
 }
 
-async function getAuthToken(): Promise<string> {
-  if (typeof window === 'undefined') {
-    throw new Error('Cannot access localStorage on server side');
-  }
-  
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    throw new Error('Not authenticated. Please log in first.');
-  }
-  
-  return token;
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorData: AudibleErrorResponse = await response.json().catch(() => ({
-      error: 'Unknown error occurred',
-      detail: response.statusText
-    }));
-    
+async function handleApiError(error: any): Promise<never> {
+  if (error.response?.data) {
+    const errorData = error.response.data as AudibleErrorResponse;
     throw new AudibleApiError(
       errorData.error || 'Request failed',
-      response.status,
+      error.response.status,
       errorData.error_type,
       errorData.detail
     );
   }
   
-  return response.json();
+  throw new AudibleApiError(
+    error.message || 'Network error occurred',
+    error.response?.status || 500
+  );
 }
 
 export const audibleApi = {
@@ -101,18 +87,12 @@ export const audibleApi = {
    * @throws AudibleApiError if connection fails
    */
   async connect(data: AudibleConnectRequest): Promise<AudibleConnectResponse> {
-    const token = await getAuthToken();
-    
-    const response = await fetch(`${API_URL}/api/audible/connect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data)
-    });
-    
-    return handleResponse<AudibleConnectResponse>(response);
+    try {
+      const response = await apiClient.post('/api/audible/connect', data);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
+    }
   },
   
   /**
@@ -122,16 +102,12 @@ export const audibleApi = {
    * @throws AudibleApiError if sync fails
    */
   async sync(): Promise<AudibleSyncResponse> {
-    const token = await getAuthToken();
-    
-    const response = await fetch(`${API_URL}/api/audible/sync`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    return handleResponse<AudibleSyncResponse>(response);
+    try {
+      const response = await apiClient.post('/api/audible/sync');
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
+    }
   },
   
   /**
@@ -144,16 +120,12 @@ export const audibleApi = {
    * @throws AudibleApiError if disconnect fails
    */
   async disconnect(): Promise<AudibleDisconnectResponse> {
-    const token = await getAuthToken();
-    
-    const response = await fetch(`${API_URL}/api/audible/disconnect`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    return handleResponse<AudibleDisconnectResponse>(response);
+    try {
+      const response = await apiClient.delete('/api/audible/disconnect');
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
+    }
   },
   
   /**
@@ -163,15 +135,12 @@ export const audibleApi = {
    * @throws AudibleApiError if request fails
    */
   async getStatus(): Promise<AudibleStatusResponse> {
-    const token = await getAuthToken();
-    
-    const response = await fetch(`${API_URL}/api/audible/status`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    return handleResponse<AudibleStatusResponse>(response);
+    try {
+      const response = await apiClient.get('/api/audible/status');
+      return response.data;
+    } catch (error) {
+      return handleApiError(error);
+    }
   }
 };
 
