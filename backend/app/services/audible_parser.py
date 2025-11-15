@@ -243,8 +243,8 @@ class AudibleParser:
                     'sequence': series.get('sequence', '')
                 }
 
-        # Extract runtime
-        runtime_minutes = item.get('runtime_length_min', 0)
+        # Extract runtime (handle None from extension scraping)
+        runtime_minutes = item.get('runtime_length_min') or 0
         hours = runtime_minutes // 60
         minutes = runtime_minutes % 60
 
