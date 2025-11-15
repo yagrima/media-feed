@@ -7,7 +7,7 @@ import { authApi } from '@/lib/api/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { User, Mail, Calendar, Shield, Loader2, Bell, Bug, BookOpen } from 'lucide-react'
+import { User, Mail, Calendar, Shield, Loader2, Bell, Bug, BookOpen, Key, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
 import { ConnectAudibleModal } from '@/components/audible/connect-audible-modal'
 import { AudibleStatusCard } from '@/components/audible/audible-status-card'
@@ -16,10 +16,32 @@ import { useToast } from '@/hooks/use-toast'
 export default function SettingsPage() {
   const { toast } = useToast()
   const [showAudibleModal, setShowAudibleModal] = useState(false)
+  const [showToken, setShowToken] = useState(false)
+  const [tokenCopied, setTokenCopied] = useState(false)
   const { data: user, isLoading } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => authApi.me(),
   })
+
+  const getAuthToken = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token') || ''
+    }
+    return ''
+  }
+
+  const copyToken = () => {
+    const token = getAuthToken()
+    if (token) {
+      navigator.clipboard.writeText(token)
+      setTokenCopied(true)
+      toast({
+        title: "Token kopiert!",
+        description: "Auth Token wurde in die Zwischenablage kopiert.",
+      })
+      setTimeout(() => setTokenCopied(false), 2000)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -152,21 +174,58 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Audible Integration */}
+      {/* Developer Tools */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            Audible Integration
+            <Key className="h-5 w-5" />
+            Entwickler-Tools
           </CardTitle>
           <CardDescription>
-            Verwalte deine Audible-Kontoverbindung
+            API-Token für Browser-Extension und Integrationen
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <AudibleStatusCard 
-            onConnect={() => setShowAudibleModal(true)}
-          />
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm font-medium mb-2">Authentifizierungs-Token</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              Nutze diesen Token für die Audible Browser-Extension
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowToken(!showToken)}
+              >
+                {showToken ? 'Token verbergen' : 'Token anzeigen'}
+              </Button>
+              {showToken && (
+                <Button
+                  variant="outline"
+                  onClick={copyToken}
+                  className="gap-2"
+                >
+                  {tokenCopied ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Kopiert!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Token kopieren
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            {showToken && (
+              <div className="mt-3 p-3 bg-muted rounded-lg border">
+                <code className="text-xs break-all font-mono">
+                  {getAuthToken()}
+                </code>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
