@@ -157,6 +157,17 @@ async def origin_validation_middleware(request: Request, call_next: Callable):
     Returns:
         Response or 403 if invalid origin
     """
+    # Skip origin validation for browser extension endpoints
+    # These are designed to work with chrome-extension:// origins
+    # Security: Still requires valid JWT auth token + rate limiting
+    extension_paths = [
+        '/api/audible/import-from-extension',
+        '/api/audible/extension/status'
+    ]
+    
+    if any(request.url.path.startswith(path) for path in extension_paths):
+        return await call_next(request)
+    
     # Only validate state-changing methods
     if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
         origin = request.headers.get('origin')
