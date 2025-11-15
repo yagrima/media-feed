@@ -98,10 +98,10 @@ async def import_from_extension(
                 'series': book.series
             })
         
-        # Process with parser
+        # Process with parser (wrap in dict with 'items' key as parser expects)
         stats = await audible_parser.process_library(
             user_id=current_user.id,
-            library_data=library_items
+            library_data={'items': library_items}
         )
         
         logger.info(
