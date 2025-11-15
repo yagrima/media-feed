@@ -93,7 +93,7 @@ class Settings(BaseSettings):
 
     # JWT Configuration
     JWT_ALGORITHM: str = "RS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days for browser extension compatibility
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Password Policy
