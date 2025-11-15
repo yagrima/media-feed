@@ -11,10 +11,11 @@ function scrapeAudibleLibrary() {
   console.log('Me Feed: Starting library scrape...');
   
   const books = [];
+  const seenAsins = new Set(); // Track duplicates
   
   // Audible library uses different selectors depending on the marketplace
-  // This works for most Audible sites (tested on .com, .de)
-  const bookElements = document.querySelectorAll('.adbl-library-content-row, [data-asin]');
+  // More specific: only get actual library item containers
+  const bookElements = document.querySelectorAll('li.productListItem, .adbl-library-content-row');
   
   console.log(`Me Feed: Found ${bookElements.length} potential book elements`);
   
@@ -29,14 +30,28 @@ function scrapeAudibleLibrary() {
         return; // Skip if no ASIN
       }
       
-      // Extract title
-      const titleElement = element.querySelector('.bc-heading, .bc-size-headline3, h3, .bc-text');
+      // Skip duplicates
+      if (seenAsins.has(asin)) {
+        console.log(`Me Feed: Skipping duplicate ASIN ${asin}`);
+        return;
+      }
+      
+      // Extract title - be more specific to avoid buttons
+      const titleElement = element.querySelector('h3, .bc-heading, .bc-size-headline3');
       const title = titleElement?.textContent?.trim();
       
       if (!title) {
         console.log(`Me Feed: Skipping ASIN ${asin} - no title found`);
         return; // Skip if no title
       }
+      
+      // Filter out invalid titles (buttons, UI elements)
+      if (title.includes('Favoriten') || title.includes('Favorite') || title.length < 3) {
+        console.log(`Me Feed: Skipping ASIN ${asin} - invalid title: "${title}"`);
+        return;
+      }
+      
+      seenAsins.add(asin); // Mark as seen
       
       // Extract authors
       const authorElements = element.querySelectorAll('.authorLabel a, .bc-color-secondary a');
