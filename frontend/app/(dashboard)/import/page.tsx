@@ -381,20 +381,55 @@ export default function ImportPage() {
         </div>
       )}
 
-      {/* Audible Integration Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Audible Audiobooks importieren</CardTitle>
-          <CardDescription>
-            Verbinde dein Audible-Konto, um deine Hörbuch-Bibliothek automatisch zu importieren
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AudibleStatusCard 
-            onConnect={() => setShowAudibleModal(true)}
-          />
-        </CardContent>
-      </Card>
+      {/* Desktop: Side-by-side layout */}
+      <div className="hidden md:grid md:grid-cols-2 md:gap-6">
+        {/* Audible Integration Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Audible Audiobooks importieren</CardTitle>
+            <CardDescription>
+              Verbinde dein Audible-Konto, um deine Hörbuch-Bibliothek automatisch zu importieren
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AudibleStatusCard 
+              onConnect={() => setShowAudibleModal(true)}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Additional import options can go here */}
+        <Card className="opacity-50">
+          <CardHeader>
+            <CardTitle>Weitere Quellen</CardTitle>
+            <CardDescription>
+              Weitere Import-Optionen folgen bald
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Geplant: Prime Video, Disney+, und mehr...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Mobile: Stacked layout */}
+      <div className="md:hidden space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Audible Audiobooks importieren</CardTitle>
+            <CardDescription>
+              Verbinde dein Audible-Konto, um deine Hörbuch-Bibliothek automatisch zu importieren
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AudibleStatusCard 
+              onConnect={() => setShowAudibleModal(true)}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Audible Connection Modal */}
       <ConnectAudibleModal

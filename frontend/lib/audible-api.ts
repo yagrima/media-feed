@@ -88,7 +88,10 @@ export const audibleApi = {
    */
   async connect(data: AudibleConnectRequest): Promise<AudibleConnectResponse> {
     try {
-      const response = await apiClient.post('/api/audible/connect', data);
+      const response = await apiClient.post('/api/audible/connect', data, {
+        // Prevent auth redirects for Audible connection errors
+        headers: { 'X-Skip-Auth-Redirect': 'true' }
+      });
       return response.data;
     } catch (error) {
       return handleApiError(error);

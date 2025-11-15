@@ -40,6 +40,9 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
 
+    // Skip auth redirect if header is set (for specific endpoints like Audible)
+    const skipAuthRedirect = originalRequest.headers?.['X-Skip-Auth-Redirect'] === 'true';
+
     // If 401 and haven't tried refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -64,12 +67,21 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return apiClient(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
-          clearTokens();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+          // Refresh failed
+          if (!skipAuthRedirect) {
+            // Only redirect to login if not explicitly skipped
+            clearTokens();
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
           }
           return Promise.reject(refreshError);
+        }
+      } else if (!skipAuthRedirect) {
+        // No refresh token available, redirect to login
+        clearTokens();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
         }
       }
     }
