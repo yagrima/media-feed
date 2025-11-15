@@ -151,8 +151,17 @@ async function syncToBackend(books, marketplace, authToken) {
   });
   
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+    console.error(`Me Feed: Backend returned ${response.status} ${response.statusText}`);
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    
+    // Provide helpful error messages based on status code
+    if (response.status === 401) {
+      throw new Error('Invalid or expired token');
+    } else if (response.status === 429) {
+      throw new Error('Rate limit exceeded (20 imports/hour)');
+    } else {
+      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+    }
   }
   
   const result = await response.json();
