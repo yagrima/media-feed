@@ -27,16 +27,16 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.audible.com/library",
-        "https://*.audible.de/library",
-        "https://*.audible.co.uk/library",
-        "https://*.audible.fr/library",
-        "https://*.audible.ca/library",
-        "https://*.audible.com.au/library",
-        "https://*.audible.in/library",
-        "https://*.audible.it/library",
-        "https://*.audible.co.jp/library",
-        "https://*.audible.es/library"
+        "https://*.audible.com/library*",
+        "https://*.audible.de/library*",
+        "https://*.audible.co.uk/library*",
+        "https://*.audible.fr/library*",
+        "https://*.audible.ca/library*",
+        "https://*.audible.com.au/library*",
+        "https://*.audible.in/library*",
+        "https://*.audible.it/library*",
+        "https://*.audible.co.jp/library*",
+        "https://*.audible.es/library*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
