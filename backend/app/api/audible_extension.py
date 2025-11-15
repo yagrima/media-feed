@@ -69,9 +69,12 @@ async def import_from_extension(
     }
     ```
     """
+    # Get user ID early to avoid lazy-loading issues in error handlers
+    user_id = current_user.id
+    
     try:
         logger.info(
-            f"Extension import for user {current_user.id}: "
+            f"Extension import for user {user_id}: "
             f"{len(import_data.books)} books from {import_data.marketplace} marketplace"
         )
         
@@ -100,12 +103,12 @@ async def import_from_extension(
         
         # Process with parser (wrap in dict with 'items' key as parser expects)
         stats = await audible_parser.process_library(
-            user_id=current_user.id,
+            user_id=user_id,
             library_data={'items': library_items}
         )
         
         logger.info(
-            f"Extension import completed for user {current_user.id}: "
+            f"Extension import completed for user {user_id}: "
             f"{stats['imported']} imported, {stats['updated']} updated, "
             f"{stats['skipped']} skipped, {stats['errors']} errors"
         )
@@ -124,7 +127,7 @@ async def import_from_extension(
         raise
     except Exception as e:
         logger.error(
-            f"Failed to import from extension for user {current_user.id}: {e}",
+            f"Failed to import from extension for user {user_id}: {e}",
             exc_info=True
         )
         raise HTTPException(
