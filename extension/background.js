@@ -12,6 +12,14 @@ const BACKEND_URL = 'https://media-feed-production.up.railway.app';
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Me Feed: Background received message:', message.action);
   
+  if (message.action === 'autoSaveToken') {
+    // Auto-save token from Me Feed login
+    handleAutoSaveToken(message.token)
+      .then(() => sendResponse({ success: true }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+  
   if (message.action === 'libraryScraped') {
     handleLibraryScraped(message.books, message.marketplace)
       .then(response => {
@@ -253,6 +261,26 @@ async function handleManualSync() {
   }
   
   throw new Error('Failed to scrape library data');
+}
+
+/**
+ * Handle auto-save token from Me Feed login
+ */
+async function handleAutoSaveToken(token) {
+  console.log('Me Feed: Auto-saving token from Me Feed login');
+  
+  await chrome.storage.local.set({ authToken: token });
+  
+  // Update badge to show authenticated
+  await chrome.action.setBadgeText({ text: '✓' });
+  await chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
+  
+  // Clear badge after 3 seconds
+  setTimeout(async () => {
+    await chrome.action.setBadgeText({ text: '' });
+  }, 3000);
+  
+  console.log('Me Feed: Token auto-saved! Extension authenticated.');
 }
 
 // Listen for extension installation

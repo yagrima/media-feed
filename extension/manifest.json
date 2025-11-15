@@ -40,6 +40,14 @@
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.railway.app/*",
+        "http://localhost:3000/*"
+      ],
+      "js": ["mefeed-token-grabber.js"],
+      "run_at": "document_idle"
     }
   ],
   "action": {
