@@ -98,6 +98,20 @@ As a admin, I want to provide a larger library of media files for users to searc
 
 **As a developer, I want the browser extension architecture to be platform-agnostic (works on Chrome, Firefox, Edge, Safari), so that we maximize user reach without maintaining separate codebases. [0/10]**
 
+---
+
+### Audible Integration (Nov 15, 2025)
+
+**As an audiobook listener, I want to sync my Audible library to Me Feed using a browser extension, so that I can track all my media consumption in one place. [5/10]** (Note: Extension working but MVP - only first page of books, missing icons, needs polish)
+
+**As an audiobook listener with a large library, I want the extension to scrape ALL pages of my Audible library (not just the first 20 books), so that my complete collection is imported. [0/10]** (PRIORITY: User has ~156 books, only 20 imported)
+
+**As a user, I want audiobooks to appear in a dedicated "Audiobooks" category filter in the library, so that I can easily view just my audiobook collection. [1/10]**
+
+**As a user, I want audiobooks from the same series to be grouped together in the library view, with the ability to collapse/expand series, so that I can better organize and navigate my audiobook collection. [0/10]**
+
+**As a user, I want the browser extension to automatically detect and save my Me Feed auth token when I log in, so that I never have to manually copy/paste tokens. [10/10]** (Note: Auto-token detection implemented Nov 15)
+
 **As a user, I want the extension to handle authentication with Me Feed securely using OAuth/API keys, never storing my Netflix password, so that my streaming credentials remain protected. [0/10]**
 
 **As a user, I want to receive notifications from the extension when sync fails (e.g., Netflix changed their page structure), with clear troubleshooting steps, so that I'm aware of issues immediately. [0/10]**

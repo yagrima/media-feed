@@ -459,3 +459,51 @@ Tested in production via API (November 11, 2025):
 See: SECURITY_BUG_SESSION_REUSE.md for full investigation details.
 
 **Related:** FR-003 - User display in navbar (✅ ALREADY IMPLEMENTED in navbar.tsx - shows user.email)
+
+---
+
+## AUDIBLE INTEGRATION - MVP STATUS (Nov 15, 2025)
+
+### STATUS: Faulty MVP - Working but Incomplete
+
+**What Works:**
+- ✅ Browser extension auto-scrapes first page of Audible library (~20 books)
+- ✅ Auto-syncs to Me Feed backend
+- ✅ Auto-token detection (no manual copy/paste)
+- ✅ Token lasts 7 days (increased from 15 minutes)
+- ✅ Books appear in library
+- ✅ Handles missing book data (null runtime)
+- ✅ Multi-marketplace support (US, DE, UK, FR, CA, AU, IN, IT, JP, ES)
+
+**Known Limitations (MVP):**
+- ❌ **CRITICAL:** Only scrapes first ~20 books (user has ~156 total) - Missing 85% of library
+- ❌ Extension icons missing (causes notification errors, shows red X badge)
+- ❌ No pagination support (can't read beyond first page)
+- ❌ No progress indicator during scraping
+- ❌ No series grouping in library view
+- ❌ No audiobook category filter
+- ❌ Extension popup doesn't show detailed sync stats
+- ❌ Runtime scraping often fails (most books show 0 minutes)
+
+**Priority Fixes for Next Session:**
+1. **FR-005:** Implement pagination/infinite scroll to scrape ALL books
+2. **FR-006:** Add audiobooks category filter to library
+3. **FR-007:** Group audiobooks by series with collapse/expand
+4. **BUG-006:** Create extension icons (fix red X badge)
+5. **BUG-007:** Improve runtime detection from Audible DOM
+
+**Security Concerns (Audit Needed After Stable):**
+- Extension has broad host_permissions (all Audible sites + Me Feed)
+- Auto-token grabbing from localStorage (convenient but needs security review)
+- No rate limiting on extension side (relies on backend 20/hour limit)
+- Extension doesn't validate token format before storing
+- CORS bypass for extension endpoints (intentional but needs documentation)
+
+**Estimated Effort to Production-Ready:**
+- Pagination fix: 2-3 hours
+- Series grouping: 3-4 hours  
+- Category filter: 1 hour
+- Icons + polish: 2 hours
+- **Total: 8-12 hours** to move from "faulty MVP" to "production-ready"
+
+**Recommended:** Security audit AFTER pagination + series features are stable.
