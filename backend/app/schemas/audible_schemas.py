@@ -2,7 +2,7 @@
 Audible Schemas - Pydantic models for Audible integration API
 """
 from pydantic import BaseModel, Field, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 import uuid
 
@@ -133,5 +133,80 @@ class AudibleErrorResponse(BaseModel):
                 "error": "Authentication failed",
                 "detail": "Invalid email or password",
                 "error_type": "auth_failed"
+            }
+        }
+
+
+# Browser Extension Schemas
+
+class AudibleBookFromExtension(BaseModel):
+    """Book data scraped from Audible by browser extension"""
+    title: str = Field(..., min_length=1, max_length=500)
+    authors: List[str] = Field(default_factory=list)
+    narrators: List[str] = Field(default_factory=list)
+    length_minutes: Optional[int] = None
+    asin: str = Field(..., min_length=10, max_length=20)
+    cover_url: Optional[str] = None
+    release_date: Optional[str] = None  # ISO format: YYYY-MM-DD
+    series: Optional[str] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "title": "The Hobbit",
+                "authors": ["J.R.R. Tolkien"],
+                "narrators": ["Andy Serkis"],
+                "length_minutes": 684,
+                "asin": "B0099RKRW0",
+                "cover_url": "https://m.media-amazon.com/images/I/...",
+                "release_date": "2020-09-16",
+                "series": "The Lord of the Rings #0"
+            }
+        }
+
+
+class AudibleExtensionImportRequest(BaseModel):
+    """Request from browser extension to import audiobooks"""
+    books: List[AudibleBookFromExtension] = Field(..., min_items=1)
+    marketplace: str = Field(default="us", pattern=r"^[a-z]{2}$")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "books": [
+                    {
+                        "title": "The Hobbit",
+                        "authors": ["J.R.R. Tolkien"],
+                        "narrators": ["Andy Serkis"],
+                        "length_minutes": 684,
+                        "asin": "B0099RKRW0",
+                        "release_date": "2020-09-16"
+                    }
+                ],
+                "marketplace": "us"
+            }
+        }
+
+
+class AudibleExtensionImportResponse(BaseModel):
+    """Response after importing from extension"""
+    success: bool
+    message: str
+    imported: int = Field(..., description="Number of new audiobooks imported")
+    updated: int = Field(..., description="Number of existing audiobooks updated")
+    skipped: int = Field(..., description="Number of audiobooks skipped (duplicates)")
+    errors: int = Field(..., description="Number of errors encountered")
+    total: int = Field(..., description="Total audiobooks processed")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "message": "Successfully processed 156 audiobooks",
+                "imported": 150,
+                "updated": 5,
+                "skipped": 1,
+                "errors": 0,
+                "total": 156
             }
         }

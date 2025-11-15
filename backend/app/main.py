@@ -39,7 +39,8 @@ from app.api import import_api
 from app.api import media_api
 from app.api import notification_api
 from app.api import dashboard_api
-# from app.api import audible  # DISABLED: Pivot to browser extension approach (see AUDIBLE_INTEGRATION_PIVOT.md)
+# from app.api import audible  # DISABLED: Backend auth failed (see AUDIBLE_INTEGRATION_PIVOT.md)
+from app.api import audible_extension  # Browser extension approach
 from slowapi.errors import RateLimitExceeded
 
 
@@ -161,7 +162,8 @@ app.include_router(import_api.router, prefix="/api")
 app.include_router(media_api.router)
 app.include_router(dashboard_api.router)
 app.include_router(notification_api.router)
-# app.include_router(audible.router)  # DISABLED: Pivot to browser extension approach
+# app.include_router(audible.router)  # DISABLED: Backend auth failed
+app.include_router(audible_extension.router)  # Browser extension approach
 
 
 # Global exception handler
