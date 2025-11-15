@@ -168,7 +168,8 @@ export function ConnectAudibleModal({ open, onClose, onSuccess }: ConnectAudible
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading || !!success}
-              autoComplete="email"
+              autoComplete="off"
+              data-form-type="other"
             />
           </div>
 
@@ -183,7 +184,8 @@ export function ConnectAudibleModal({ open, onClose, onSuccess }: ConnectAudible
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading || !!success}
-              autoComplete="current-password"
+              autoComplete="off"
+              data-form-type="other"
             />
             <p className="text-xs text-muted-foreground">
               If you have 2FA enabled, append your 2FA code to your password
