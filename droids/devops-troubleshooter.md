@@ -1,7 +1,7 @@
 ---
 name: devops-troubleshooter
 description: Debug production issues, analyze logs, and fix deployment failures. Masters monitoring tools, incident response, and root cause analysis. Use PROACTIVELY for production debugging or system outages.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

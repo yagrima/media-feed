@@ -1,7 +1,7 @@
 ---
 name: mobile-developer
 description: Develop React Native or Flutter apps with native integrations. Handles offline sync, push notifications, and app store deployments. Use PROACTIVELY for mobile features, cross-platform code, or app optimization.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

@@ -99,20 +99,12 @@ export default function DashboardPage() {
               Track your media consumption and get sequel notifications
             </p>
           </div>
-          <div className="flex gap-3">
-            <Link href="/import">
-              <Button size="lg">
-                <Upload className="mr-2 h-4 w-4" />
-                Import CSV
-              </Button>
-            </Link>
-            <Link href="/import">
-              <Button size="lg" variant="outline">
-                <Headphones className="mr-2 h-4 w-4" />
-                Import Audible
-              </Button>
-            </Link>
-          </div>
+          <Link href="/import">
+            <Button size="lg">
+              <Upload className="mr-2 h-4 w-4" />
+              Import CSV
+            </Button>
+          </Link>
         </div>
 
         <Card className="border-dashed">

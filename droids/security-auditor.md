@@ -1,7 +1,7 @@
 ---
 name: security-auditor
 description: Review code for vulnerabilities, implement secure authentication, and ensure OWASP compliance. Handles JWT, OAuth2, CORS, CSP, and encryption. Use PROACTIVELY for security reviews, auth flows, or vulnerability fixes.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

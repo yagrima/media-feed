@@ -1,7 +1,7 @@
 ---
 name: deployment-engineer
 description: Configure CI/CD pipelines, Docker containers, and cloud deployments. Handles GitHub Actions, Kubernetes, and infrastructure automation. Use PROACTIVELY when setting up deployments, containers, or CI/CD workflows.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

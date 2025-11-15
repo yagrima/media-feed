@@ -8,8 +8,8 @@ import { Upload, ArrowLeft, FileText, CheckCircle2 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { useImport } from '@/lib/import-context'
 import { useRouter } from 'next/navigation'
-import { ConnectAudibleModal } from '@/components/audible/connect-audible-modal'
-import { AudibleStatusCard } from '@/components/audible/audible-status-card'
+// import { ConnectAudibleModal } from '@/components/audible/connect-audible-modal'  // REMOVED: Backend auth failed
+// import { AudibleStatusCard } from '@/components/audible/audible-status-card'  // REMOVED: Backend auth failed
 import { useToast } from '@/hooks/use-toast'
 
 export default function ImportPage() {
@@ -23,7 +23,7 @@ export default function ImportPage() {
   const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string; jobId?: string } | null>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
   const dragCounterRef = useRef(0)
-  const [showAudibleModal, setShowAudibleModal] = useState(false)
+  // const [showAudibleModal, setShowAudibleModal] = useState(false)  // REMOVED: Backend auth failed
 
   // File upload handler
   const handleFileUpload = useCallback(async (file: File) => {
@@ -244,7 +244,7 @@ export default function ImportPage() {
   }, [handleFileUpload])
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
         <Link href="/library">
           <Button variant="outline" size="sm">
@@ -255,14 +255,12 @@ export default function ImportPage() {
         <div>
           <h1 className="text-3xl font-bold">Medien importieren</h1>
           <p className="text-muted-foreground mt-1">
-            Importiere von Netflix, Audible oder anderen Quellen
+            Lade deine Netflix Verlaufs-CSV-Datei hoch
           </p>
         </div>
       </div>
 
-      {/* Desktop: CSV and Audible side-by-side */}
-      <div className="hidden md:grid md:grid-cols-2 md:gap-6">
-        <Card>
+      <Card>
         <CardHeader>
           <CardTitle>CSV-Datei hochladen</CardTitle>
           <CardDescription>
@@ -343,120 +341,6 @@ export default function ImportPage() {
         </CardContent>
       </Card>
 
-      {/* Audible Integration Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Audible Audiobooks importieren</CardTitle>
-          <CardDescription>
-            Verbinde dein Audible-Konto, um deine Hörbuch-Bibliothek automatisch zu importieren
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AudibleStatusCard 
-            onConnect={() => setShowAudibleModal(true)}
-          />
-        </CardContent>
-      </Card>
-      </div>
-
-      {/* Mobile: Stacked layout */}
-      <div className="md:hidden space-y-6">
-        <Card>
-        <CardHeader>
-          <CardTitle>CSV-Datei hochladen</CardTitle>
-          <CardDescription>
-            Wähle deine Netflix Verlaufs-CSV-Datei aus, um deine Mediathek zu importieren
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          {uploadedFile && !isUploading && uploadResult?.success ? (
-            // Success State
-            <div className="flex flex-col items-center text-center">
-              <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">{uploadedFile.name}</h3>
-              <p className="text-green-600 mb-6 text-lg">{uploadResult.message}</p>
-              <div className="flex gap-4">
-                <Link href="/library">
-                  <Button>Mediathek ansehen</Button>
-                </Link>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setUploadedFile(null)
-                    setUploadResult(null)
-                    setUploadProgress(0)
-                  }}
-                >
-                  Weitere Datei hochladen
-                </Button>
-              </div>
-            </div>
-          ) : isUploading ? (
-            // Upload State
-            <div className="flex flex-col items-center text-center w-full max-w-sm">
-              <Upload className="h-12 w-12 text-primary animate-pulse mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Lade {uploadedFile?.name} hoch...</h3>
-              <p className="text-muted-foreground mb-4">Verarbeite deine CSV-Datei...</p>
-              <Progress value={uploadProgress} className="w-full mb-2" />
-              <p className="text-sm text-muted-foreground">{uploadProgress}%</p>
-            </div>
-          ) : (
-            // Upload Area
-            <div
-              ref={dropZoneRef}
-              className={`relative flex flex-col items-center justify-center w-full py-12 px-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                isDragging ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-gray-300 hover:border-primary'
-              }`}
-              onClick={() => {
-                console.log('Upload area clicked')
-                document.getElementById('file-upload-mobile')?.click()
-              }}
-              style={{ minHeight: '300px' }}
-            >
-              <input
-                type="file"
-                id="file-upload-mobile"
-                accept=".csv"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              
-              <Upload className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                {isDragging ? 'Datei hier loslassen' : 'CSV-Datei hier ablegen oder klicken'}
-              </h3>
-              <p className="text-muted-foreground text-center mb-6 max-w-md">
-                Lade deine Netflix Verlaufs-CSV-Datei hoch (Max. 10MB)
-              </p>
-              <Button 
-                type="button" 
-                onClick={(e) => {
-                  e.stopPropagation()
-                  document.getElementById('file-upload-mobile')?.click()
-                }}
-              >
-                Datei auswählen
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Audible Audiobooks importieren</CardTitle>
-          <CardDescription>
-            Verbinde dein Audible-Konto, um deine Hörbuch-Bibliothek automatisch zu importieren
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AudibleStatusCard 
-            onConnect={() => setShowAudibleModal(true)}
-          />
-        </CardContent>
-      </Card>
-      </div>
-
       {/* Error Message */}
       {uploadResult && !uploadResult.success && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -499,20 +383,7 @@ export default function ImportPage() {
 
 
 
-      {/* Audible Connection Modal */}
-      <ConnectAudibleModal
-        open={showAudibleModal}
-        onClose={() => setShowAudibleModal(false)}
-        onSuccess={(data) => {
-          toast({
-            title: "Erfolgreich verbunden!",
-            description: `${data.books_imported} Hörbücher von Audible importiert.`,
-          })
-          setShowAudibleModal(false)
-          // Optionally refresh the page or status
-          router.refresh()
-        }}
-      />
+      {/* Audible removed - pivoting to browser extension approach (see AUDIBLE_INTEGRATION_PIVOT.md) */}
     </div>
   )
 }

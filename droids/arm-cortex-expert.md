@@ -5,7 +5,7 @@ description: >
   for ARM Cortex-M microcontrollers (Teensy, STM32, nRF52, SAMD). Decades of experience
   writing reliable, optimized, and maintainable embedded code with deep expertise in
   memory barriers, DMA/cache coherency, interrupt-driven I/O, and peripheral drivers.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: []
 ---
 

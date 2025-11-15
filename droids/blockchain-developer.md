@@ -1,7 +1,7 @@
 ---
 name: blockchain-developer
 description: Develop smart contracts, DeFi protocols, and Web3 applications. Expertise in Solidity, security auditing, and gas optimization. Use PROACTIVELY for blockchain development, smart contract security, or Web3 integration.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

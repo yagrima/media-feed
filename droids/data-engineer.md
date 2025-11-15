@@ -1,7 +1,7 @@
 ---
 name: data-engineer
 description: Build ETL pipelines, data warehouses, and streaming architectures. Implements Spark jobs, Airflow DAGs, and Kafka streams. Use PROACTIVELY for data pipeline design or analytics infrastructure.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

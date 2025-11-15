@@ -1,7 +1,7 @@
 ---
 name: data-analyst
 description: Quantitative analysis, statistical insights, and data-driven research. Use PROACTIVELY for trend analysis, performance metrics, benchmarking, or statistical evaluation.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

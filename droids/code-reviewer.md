@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Expert code review specialist with AI-powered analysis. Reviews code for quality, security, performance, and maintainability. Use PROACTIVELY after writing/modifying code, before PRs, or when code quality concerns arise.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid", "github___get_pull_request", "github___get_pull_request_files", "github___create_pull_request_review", "github___get_pull_request_comments"]
 ---
 

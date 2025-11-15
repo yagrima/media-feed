@@ -1,7 +1,7 @@
 ---
 name: nextjs-app-router-developer
 description: Build modern Next.js applications using App Router with Server Components, Server Actions, PPR, and advanced caching strategies. Expert in Next.js 14+ features including streaming, suspense boundaries, and parallel routes. Use PROACTIVELY for Next.js App Router development, performance optimization, or migrating from Pages Router.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

@@ -978,7 +978,7 @@ interface PluginMarketplace {
 ```typescript
 // Custom tool from AI Integration Plugin
 @orchestrator
-"Analyze this code with OpenAI's GPT-4"
+"Analyze this code with Claude Sonnet 4.5"
 ```
 
 ### Creating Custom Workflows
@@ -1013,7 +1013,7 @@ interface PluginMarketplace {
 export default {
   name: "my-specialist-droid",
   description: "My custom droid",
-  model: "claude-sonnet-4-5-20250929",
+  model: "claude-sonnet-4-5",
   tools: ["Read", "Write", "Execute", "WebSearch", "CustomAPI"],
   
   async executeTask(task: Task): Promise<TaskResult> {

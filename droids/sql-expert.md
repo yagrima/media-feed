@@ -1,7 +1,7 @@
 ---
 name: sql-expert
 description: Write complex SQL queries and optimize database performance. Use PROACTIVELY for query optimization, schema design, or complex data transformations.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

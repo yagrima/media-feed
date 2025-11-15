@@ -1,7 +1,7 @@
 ---
 name: ruby-expert
 description: Write idiomatic Ruby code following best practices and design patterns. Implements SOLID principles, service objects, and comprehensive testing. Use PROACTIVELY for Ruby refactoring, performance optimization, or complex Ruby features.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

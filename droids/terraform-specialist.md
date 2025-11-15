@@ -1,7 +1,7 @@
 ---
 name: terraform-specialist
 description: Write Terraform modules and manage infrastructure as code. Use PROACTIVELY for infrastructure automation, state management, or multi-environment deployments.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

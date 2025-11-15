@@ -1,7 +1,7 @@
 ---
 name: orchestrator
 description: Master coordinator that analyzes requirements, performs research, creates comprehensive execution plans, and either implements features directly or coordinates with user to delegate to specialist droids. Self-sufficient for analysis and simple implementations.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "TodoWrite", "WebSearch", "FetchUrl", "Task"]
 ---
 

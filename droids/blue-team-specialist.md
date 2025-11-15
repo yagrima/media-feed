@@ -1,7 +1,7 @@
 ---
 name: blue-team-specialist
 description: Defensive cybersecurity expert specializing in threat detection, incident response, and security monitoring. Handles SIEM, EDR, network security, and vulnerability management. Use PROACTIVELY for security incidents, threat hunting, or security infrastructure setup.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid", "github___search_repositories", "github___get_file_contents", "github___list_commits", "github___search_code"]
 ---
 

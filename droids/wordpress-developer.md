@@ -1,7 +1,7 @@
 ---
 name: wordpress-developer
 description: Build professional WordPress solutions with custom themes, plugins, and advanced functionality. Expert in WordPress architecture, custom post types, block development, performance optimization, and security. Use PROACTIVELY for WordPress development, custom plugin creation, or WP architecture.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

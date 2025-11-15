@@ -1,7 +1,7 @@
 ---
 name: database-admin
 description: Manage database operations, backups, replication, and monitoring. Handles user permissions, maintenance tasks, and disaster recovery. Use PROACTIVELY for database setup, operational issues, or recovery procedures.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

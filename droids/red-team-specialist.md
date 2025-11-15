@@ -1,7 +1,7 @@
 ---
 name: red-team-specialist
 description: Offensive security expert specializing in penetration testing, vulnerability assessment, and adversary emulation. Handles ethical hacking, social engineering, and security research. Use AUTHORIZED penetration testing engagements, security assessments, or purple team exercises ONLY.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid", "github___search_repositories", "github___search_code", "github___get_file_contents"]
 ---
 

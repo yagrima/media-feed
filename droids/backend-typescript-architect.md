@@ -1,7 +1,7 @@
 ---
 name: backend-typescript-architect
 description: Use this agent when you need expert backend development work in TypeScript with Bun runtime, including API design, database integration, server architecture, performance optimization, or any backend-focused development tasks.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

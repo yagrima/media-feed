@@ -1,7 +1,7 @@
 ---
 name: rust-expert
 description: Write idiomatic Rust code with ownership, lifetimes, and type safety. Implements concurrent systems, async programming, and memory-safe abstractions. Use PROACTIVELY for Rust development, systems programming, or performance-critical code.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

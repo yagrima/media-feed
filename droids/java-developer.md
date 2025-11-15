@@ -1,7 +1,7 @@
 ---
 name: java-developer
 description: Master modern Java with streams, concurrency, and JVM optimization. Handles Spring Boot, reactive programming, and enterprise patterns. Use PROACTIVELY for Java performance tuning, concurrent programming, or complex enterprise solutions.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 

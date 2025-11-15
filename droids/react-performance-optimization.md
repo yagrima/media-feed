@@ -1,7 +1,7 @@
 ---
 name: react-performance-optimization
 description: React Performance Optimization specialist focusing on identifying, analyzing, and resolving performance bottlenecks in React applications. Expertise covers rendering optimization, bundle analysis, memory management, and Core Web Vitals improvements.
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4-5
 tools: ["Read", "LS", "Grep", "Glob", "Create", "Edit", "MultiEdit", "Execute", "WebSearch", "FetchUrl", "TodoWrite", "Task", "GenerateDroid"]
 ---
 
