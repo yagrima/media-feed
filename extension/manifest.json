@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Me Feed - Audible Sync",
+  "version": "1.0.0",
+  "description": "Automatically sync your Audible library to Me Feed",
+  "permissions": [
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://*.audible.com/*",
+    "https://*.audible.de/*",
+    "https://*.audible.co.uk/*",
+    "https://*.audible.fr/*",
+    "https://*.audible.ca/*",
+    "https://*.audible.com.au/*",
+    "https://*.audible.in/*",
+    "https://*.audible.it/*",
+    "https://*.audible.co.jp/*",
+    "https://*.audible.es/*",
+    "https://media-feed-production.up.railway.app/*",
+    "http://localhost:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.audible.com/library",
+        "https://*.audible.de/library",
+        "https://*.audible.co.uk/library",
+        "https://*.audible.fr/library",
+        "https://*.audible.ca/library",
+        "https://*.audible.com.au/library",
+        "https://*.audible.in/library",
+        "https://*.audible.it/library",
+        "https://*.audible.co.jp/library",
+        "https://*.audible.es/library"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
