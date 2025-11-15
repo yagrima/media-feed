@@ -159,33 +159,33 @@ export function ConnectAudibleModal({ open, onClose, onSuccess }: ConnectAudible
 
           {/* Email Input */}
           <div className="space-y-2">
-            <Label htmlFor="email">Audible Email</Label>
+            <Label htmlFor="audible-email">Audible Email</Label>
             <Input
-              id="email"
+              id="audible-email"
+              name="email"
               type="email"
               placeholder="your@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading || !!success}
-              autoComplete="off"
-              data-form-type="other"
+              autoComplete="username"
             />
           </div>
 
           {/* Password Input */}
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="audible-password">Password</Label>
             <Input
-              id="password"
+              id="audible-password"
+              name="password"
               type="password"
               placeholder="Enter your Audible password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading || !!success}
-              autoComplete="off"
-              data-form-type="other"
+              autoComplete="current-password"
             />
             <p className="text-xs text-muted-foreground">
               If you have 2FA enabled, append your 2FA code to your password
