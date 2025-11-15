@@ -115,9 +115,27 @@ async function handleLibraryScraped(books, marketplace) {
       } catch (error) {
         console.error('Me Feed: Sync to backend failed:', error);
         
-        // Show error badge
-        await chrome.action.setBadgeText({ text: '✗' });
-        await chrome.action.setBadgeBackgroundColor({ color: '#F44336' });
+        // If token is invalid/expired, clear it so user can re-authenticate
+        if (error.message.includes('Invalid or expired token')) {
+          console.log('Me Feed: Clearing expired token from storage');
+          await chrome.storage.local.remove('authToken');
+          
+          // Show auth needed badge
+          await chrome.action.setBadgeText({ text: '!' });
+          await chrome.action.setBadgeBackgroundColor({ color: '#FF5722' });
+          
+          // Show notification to re-authenticate
+          await chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icon128.png',
+            title: 'Me Feed Token Expired',
+            message: 'Click extension icon and paste a new token from Me Feed Settings'
+          });
+        } else {
+          // Show error badge
+          await chrome.action.setBadgeText({ text: '✗' });
+          await chrome.action.setBadgeBackgroundColor({ color: '#F44336' });
+        }
         
         throw error;
       }

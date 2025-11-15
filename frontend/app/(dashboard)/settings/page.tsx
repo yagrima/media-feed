@@ -36,10 +36,17 @@ export default function SettingsPage() {
       navigator.clipboard.writeText(token)
       setTokenCopied(true)
       toast({
-        title: "Token kopiert!",
-        description: "Auth Token wurde in die Zwischenablage kopiert.",
+        title: "✅ Token kopiert!",
+        description: "Jetzt in der Browser-Extension einfügen.",
+        duration: 4000,
       })
       setTimeout(() => setTokenCopied(false), 2000)
+    } else {
+      toast({
+        title: "❌ Fehler",
+        description: "Kein Token gefunden. Bitte erneut einloggen.",
+        variant: "destructive",
+      })
     }
   }
 
