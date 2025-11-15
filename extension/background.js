@@ -93,13 +93,17 @@ async function handleLibraryScraped(books, marketplace) {
           lastSyncResult: result
         });
         
-        // Show success notification
-        await chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icon128.png',
-          title: 'Audible Synced!',
-          message: `${result.imported} new, ${result.updated} updated, ${result.total} total audiobooks`
-        });
+        // Show success notification (skip if icons missing)
+        try {
+          await chrome.notifications.create({
+            type: 'basic',
+            iconUrl: 'icon128.png',
+            title: 'Audible Synced!',
+            message: `${result.imported} new, ${result.updated} updated, ${result.total} total audiobooks`
+          });
+        } catch (e) {
+          console.log('Me Feed: Notification skipped (icon missing)');
+        }
         
         // Update badge to show success
         await chrome.action.setBadgeText({ text: '✓' });
@@ -124,13 +128,17 @@ async function handleLibraryScraped(books, marketplace) {
           await chrome.action.setBadgeText({ text: '!' });
           await chrome.action.setBadgeBackgroundColor({ color: '#FF5722' });
           
-          // Show notification to re-authenticate
-          await chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icon128.png',
-            title: 'Me Feed Token Expired',
-            message: 'Click extension icon and paste a new token from Me Feed Settings'
-          });
+          // Show notification to re-authenticate (skip if icons missing)
+          try {
+            await chrome.notifications.create({
+              type: 'basic',
+              iconUrl: 'icon128.png',
+              title: 'Me Feed Token Expired',
+              message: 'Click extension icon and paste a new token from Me Feed Settings'
+            });
+          } catch (e) {
+            console.log('Me Feed: Notification skipped (icon missing)');
+          }
         } else {
           // Show error badge
           await chrome.action.setBadgeText({ text: '✗' });
