@@ -93,11 +93,13 @@ class AudibleService:
 
             # Authenticate with Audible (password only in memory here)
             # Note: with_username=False means use email (standard Amazon login)
+            # captcha_callback=lambda x: None disables interactive CAPTCHA prompts
             auth = audible.Authenticator.from_login(
                 username=email,
                 password=password,  # Password discarded after this line
                 locale=marketplace,
-                with_username=False
+                with_username=False,
+                captcha_callback=lambda captcha_url: None  # Disable interactive CAPTCHA
             )
 
             # Password is now out of scope and will be garbage collected
