@@ -169,8 +169,9 @@ async def connect_audible(
     
     except AudibleAuthError as e:
         logger.warning(f"Auth failed for user {current_user.id}: {e}")
+        # Use 400 instead of 401 to avoid triggering frontend auth interceptor/logout
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": str(e),
                 "error_type": "auth_failed",
@@ -266,8 +267,9 @@ async def sync_audible_library(
     
     except AudibleAuthError as e:
         logger.warning(f"Auth error during sync for user {current_user.id}: {e}")
+        # Use 403 instead of 401 to avoid triggering frontend auth interceptor/logout
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "error": str(e),
                 "error_type": "token_expired",
