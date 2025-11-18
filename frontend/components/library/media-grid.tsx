@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { mediaApi, UserMedia, MediaFilters } from '@/lib/api/media'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Pagination } from '@/components/ui/pagination'
-import { Film, Tv, Loader2 } from 'lucide-react'
+import { Film, Tv, Loader2, BookOpen, Layers } from 'lucide-react'
 import MediaDetailModal from './media-detail-modal'
+import SeriesDetailModal from './series-detail-modal'
 
 interface MediaGridProps {
   filters: MediaFilters
@@ -79,9 +80,47 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
   const error = viewMode === 'pagination' ? paginationError : infiniteError
 
   // Flatten infinite data
-  const allItems = viewMode === 'infinite' && infiniteData
-    ? infiniteData.pages.flatMap((page) => page.items)
-    : data?.items || []
+  const rawItems = useMemo(() => {
+    return viewMode === 'infinite' && infiniteData
+      ? infiniteData.pages.flatMap((page) => page.items)
+      : data?.items || []
+  }, [viewMode, infiniteData, data])
+
+  // Group items by series (for audiobooks)
+  const groupedItems = useMemo(() => {
+    const grouped: any[] = []
+    const seriesMap = new Map<string, UserMedia[]>()
+
+    // First pass: Identify series and standalone items
+    rawItems.forEach(item => {
+      // Check if it's an audiobook part of a series
+      if (item.media.type === 'audiobook' && item.media.media_metadata?.series?.title) {
+        const seriesTitle = item.media.media_metadata.series.title
+        if (!seriesMap.has(seriesTitle)) {
+          seriesMap.set(seriesTitle, [])
+        }
+        seriesMap.get(seriesTitle)?.push(item)
+      } else {
+        // Standalone item
+        grouped.push({ type: 'item', data: item })
+      }
+    })
+
+    // Second pass: Add series groups
+    seriesMap.forEach((items, seriesTitle) => {
+      // Sort by sequence/purchase date if needed
+      // For now, just group them
+      grouped.push({
+        type: 'series_group',
+        seriesTitle: seriesTitle,
+        items: items,
+        // Use the first item as representative for cover/metadata
+        representative: items[0]
+      })
+    })
+
+    return grouped
+  }, [rawItems])
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -109,7 +148,7 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
     )
   }
 
-  if (allItems.length === 0 && !isLoading) {
+  if (rawItems.length === 0 && !isLoading) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-16">
@@ -131,8 +170,12 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {allItems.map((userMedia: UserMedia) => (
-          <MediaCard key={userMedia.id} userMedia={userMedia} />
+        {groupedItems.map((entry: any, index) => (
+          entry.type === 'series_group' ? (
+            <SeriesCard key={`series-${entry.seriesTitle}`} group={entry} />
+          ) : (
+            <MediaCard key={entry.data.id} userMedia={entry.data} />
+          )
         ))}
       </div>
 
@@ -156,7 +199,7 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
               <p className="text-sm text-muted-foreground">Loading more...</p>
             </div>
           )}
-          {!hasNextPage && allItems.length > 0 && (
+          {!hasNextPage && rawItems.length > 0 && (
             <p className="text-sm text-muted-foreground">You've reached the end of your library ({totalItems} items)</p>
           )}
         </div>
@@ -165,10 +208,62 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
   )
 }
 
+function SeriesCard({ group }: { group: any }) {
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const count = group.items.length
+  const { representative } = group
+  
+  return (
+    <>
+      <Card 
+        className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-primary"
+        onClick={() => setIsDetailOpen(true)}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <Layers className="h-5 w-5 text-primary" />
+            <Badge variant="default" className="bg-primary/10 text-primary hover:bg-primary/20">
+              Audiobook Series
+            </Badge>
+          </div>
+
+          <div className="mb-1">
+            <h3 className="font-semibold line-clamp-2 inline">{group.seriesTitle}</h3>
+            <span className="text-sm text-muted-foreground ml-2">({count} Books)</span>
+          </div>
+
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+            {representative.media.media_metadata?.authors?.join(', ') || 'Unknown Author'}
+          </p>
+
+          <div className="flex items-center justify-between mt-3 pt-3 border-t">
+            <Badge variant="outline" className="text-xs">
+              Audible
+            </Badge>
+            <p className="text-xs text-muted-foreground">
+              Series
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <SeriesDetailModal
+        seriesTitle={group.seriesTitle}
+        books={group.items}
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+      />
+    </>
+  )
+}
+
 function MediaCard({ userMedia }: { userMedia: UserMedia }) {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const { media } = userMedia
-  const Icon = media.type === 'movie' ? Film : Tv
+  
+  let Icon = Film
+  if (media.type === 'tv_series') Icon = Tv
+  if (media.type === 'audiobook') Icon = BookOpen
 
   // Show episode count only for TV series
   const episodeCount = media.type === 'tv_series' && media.watched_episodes_count != null
@@ -185,6 +280,10 @@ function MediaCard({ userMedia }: { userMedia: UserMedia }) {
       setIsDetailOpen(true)
     }
   }
+  
+  // Format date display
+  const dateLabel = media.type === 'audiobook' ? 'Last Heard' : 'Watched'
+  const displayDate = new Date(userMedia.consumed_at).toLocaleDateString()
 
   return (
     <>
@@ -195,8 +294,8 @@ function MediaCard({ userMedia }: { userMedia: UserMedia }) {
         <CardContent className="p-4">
           <div className="flex items-start justify-between mb-3">
             <Icon className="h-5 w-5 text-muted-foreground" />
-            <Badge variant={media.type === 'movie' ? 'default' : 'secondary'}>
-              {media.type === 'movie' ? 'Movie' : 'TV Series'}
+            <Badge variant={media.type === 'movie' ? 'default' : media.type === 'audiobook' ? 'outline' : 'secondary'}>
+              {media.type === 'movie' ? 'Movie' : media.type === 'audiobook' ? 'Audiobook' : 'TV Series'}
             </Badge>
           </div>
 
@@ -210,14 +309,21 @@ function MediaCard({ userMedia }: { userMedia: UserMedia }) {
           {media.season_number && (
             <p className="text-sm text-muted-foreground mb-2">Season {media.season_number}</p>
           )}
+          
+          {media.type === 'audiobook' && media.media_metadata?.authors && (
+             <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+               {media.media_metadata.authors.join(', ')}
+             </p>
+          )}
 
           <div className="flex items-center justify-between mt-3 pt-3 border-t">
             <Badge variant="outline" className="text-xs">
               {media.platform}
             </Badge>
-            <p className="text-xs text-muted-foreground">
-              {new Date(userMedia.consumed_at).toLocaleDateString()}
-            </p>
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{dateLabel}</p>
+              <p className="text-xs text-muted-foreground">{displayDate}</p>
+            </div>
           </div>
         </CardContent>
       </Card>

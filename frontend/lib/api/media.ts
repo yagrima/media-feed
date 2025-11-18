@@ -16,7 +16,7 @@ export interface UserMedia {
 export interface Media {
   id: string
   title: string
-  type: 'movie' | 'tv_series'
+  type: 'movie' | 'tv_series' | 'audiobook'
   platform: string
   base_title?: string
   season_number?: number
@@ -24,6 +24,19 @@ export interface Media {
   total_episodes?: number  // From TMDB
   total_seasons?: number   // From TMDB
   created_at: string
+  media_metadata?: {
+    series?: {
+      title: string
+      sequence?: string
+    }
+    authors?: string[]
+    narrators?: string[]
+    duration_minutes?: number
+    cover_url?: string
+    cover_images?: any
+    rating?: number
+    publisher?: string
+  }
 }
 
 export interface UserMediaResponse {
