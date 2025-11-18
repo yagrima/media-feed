@@ -117,9 +117,31 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
              const parenMatch = title.match(/\(([^)]+?)\s+\d+\)/);
              if (parenMatch) seriesTitle = parenMatch[1].trim();
           }
+
+          // New: Handle "Series Title X" or "Series Title Vol. X" (e.g. "Solo Leveling 1")
+          if (!seriesTitle) {
+             // Pattern 1: Title followed immediately by number (e.g. "Solo Leveling 1")
+             // Requires prefix to be at least 3 chars to avoid "The 1"
+             const suffixNumMatch = title.match(/^(.{3,}?)\s+(\d+)$/);
+             if (suffixNumMatch) {
+                seriesTitle = suffixNumMatch[1].trim();
+             }
+
+             // Pattern 2: Title followed by Vol/Teil/Folge/Book and number
+             // e.g. "Solo Leveling Vol. 1", "Harry Potter Book 1"
+             if (!seriesTitle) {
+                const volMatch = title.match(/^(.{3,}?)\s+(?:Vol\.|Volume|Book|Teil|Folge)\.?\s*\d+/i);
+                if (volMatch) {
+                   seriesTitle = volMatch[1].trim();
+                }
+             }
+          }
         }
 
         if (seriesTitle) {
+          // Normalize series title (optional)
+          seriesTitle = seriesTitle.trim();
+          
           if (!seriesMap.has(seriesTitle)) {
             seriesMap.set(seriesTitle, [])
           }
@@ -132,6 +154,86 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
         grouped.push({ type: 'item', data: item })
       }
     })
+
+    // Second pass: Clustering ungrouped items by common prefix
+    // This handles cases where no explicit series pattern is found but titles share a stem
+    // e.g. "My Series Name: The Beginning" and "My Series Name: The End" (no "Book X")
+    // Note: This is O(N^2) in worst case but N is small (page size 20-100)
+    
+    // Extract currently ungrouped items
+    const ungroupedAudiobooks: { idx: number, item: UserMedia }[] = [];
+    grouped.forEach((g, i) => {
+       if (g.type === 'item' && g.data.media.type === 'audiobook') {
+          ungroupedAudiobooks.push({ idx: i, item: g.data });
+       }
+    });
+
+    if (ungroupedAudiobooks.length > 1) {
+       // Sort by title length to prioritize shorter "base" titles
+       // Actually, standard sort is better for finding prefixes
+       ungroupedAudiobooks.sort((a, b) => a.item.media.title.localeCompare(b.item.media.title));
+
+       const newSeriesMap = new Map<string, UserMedia[]>();
+       const itemsToRemove = new Set<number>();
+
+       for (let i = 0; i < ungroupedAudiobooks.length; i++) {
+          if (itemsToRemove.has(ungroupedAudiobooks[i].idx)) continue;
+
+          const baseItem = ungroupedAudiobooks[i];
+          const baseTitle = baseItem.item.media.title;
+          
+          // Look for matches in subsequent items
+          for (let j = i + 1; j < ungroupedAudiobooks.length; j++) {
+             if (itemsToRemove.has(ungroupedAudiobooks[j].idx)) continue;
+
+             const compareItem = ungroupedAudiobooks[j];
+             const compareTitle = compareItem.item.media.title;
+
+             // Logic: If compareTitle starts with baseTitle (e.g. "Matrix" vs "Matrix Reloaded")
+             // AND baseTitle is long enough (>5 chars)
+             // OR both share a very long common prefix (>10 chars)
+             
+             let commonPrefixLen = 0;
+             while (commonPrefixLen < baseTitle.length && commonPrefixLen < compareTitle.length && baseTitle[commonPrefixLen] === compareTitle[commonPrefixLen]) {
+                commonPrefixLen++;
+             }
+             
+             // If substantial overlap (e.g. "Solo Leveling ")
+             if (commonPrefixLen > 8 && (commonPrefixLen / baseTitle.length > 0.7)) {
+                // Found a potential series!
+                const seriesName = baseTitle.substring(0, commonPrefixLen).trim().replace(/[:,-]$/, '');
+                
+                if (!newSeriesMap.has(seriesName)) {
+                   newSeriesMap.set(seriesName, [baseItem.item]);
+                   itemsToRemove.add(baseItem.idx);
+                }
+                newSeriesMap.get(seriesName)?.push(compareItem.item);
+                itemsToRemove.add(compareItem.idx);
+             }
+          }
+       }
+
+       // Add new clustered series to groupedItems
+       // We need to reconstruct grouped array
+       if (newSeriesMap.size > 0) {
+          // Filter out moved items
+          const filteredGrouped = grouped.filter((_, idx) => 
+             !(grouped[_].type === 'item' && grouped[_].data.media.type === 'audiobook' && itemsToRemove.has(idx))
+          );
+          
+          // Add new groups
+          newSeriesMap.forEach((items, seriesTitle) => {
+             filteredGrouped.push({
+                type: 'series_group',
+                seriesTitle: seriesTitle,
+                items: items,
+                representative: items[0]
+             });
+          });
+          
+          return filteredGrouped;
+       }
+    }
 
     // Second pass: Add series groups
     seriesMap.forEach((items, seriesTitle) => {
