@@ -22,7 +22,9 @@ from app.schemas.audible_schemas import (
     AudibleSyncResponse,
     AudibleDisconnectResponse,
     AudibleStatusResponse,
-    AudibleErrorResponse
+    AudibleErrorResponse,
+    AudibleExtensionImportRequest,
+    AudibleExtensionImportResponse
 )
 from app.core.middleware import limiter
 from datetime import datetime
@@ -30,6 +32,125 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/audible", tags=["audible"])
+
+
+@router.post(
+    "/import-from-extension",
+    response_model=AudibleExtensionImportResponse
+)
+@limiter.limit("20/hour")
+async def import_from_extension(
+    request: Request,
+    import_request: AudibleExtensionImportRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Import audiobooks from browser extension
+    
+    Receives scraped data from the browser extension and imports it into the library.
+    Does NOT require Audible credentials. Uses the user's existing Me Feed session.
+    
+    **Rate Limit:** 20 imports per hour
+    """
+    audible_parser = AudibleParser(db)
+    
+    try:
+        logger.info(f"Extension import started for user {current_user.id}: {len(import_request.books)} books")
+        
+        # Transform schema data to format expected by AudibleParser
+        # The parser expects raw dictionary format similar to Audible API response
+        items_data = []
+        
+        for book in import_request.books:
+            # Map fields from extension format to parser format
+            item_dict = book.model_dump()
+            
+            # Rename/remap specific fields
+            item_dict['runtime_length_min'] = item_dict.pop('length_minutes', 0)
+            
+            # Handle series if present string
+            # Parser expects series list or dict structure usually, 
+            # but looks like it handles extraction carefully.
+            # Let's check parser: _extract_metadata expects:
+            # series_data = item.get('series', []) which is a list of dicts usually.
+            # But extension sends a string "Series Name #1".
+            # We might need to patch this in the parser or adapt here.
+            # For now, let's leave as is, parser uses .get('series', [])
+            
+            # Format series for parser if possible, otherwise it might be skipped
+            if book.series:
+                # Simple heuristic attempt to structure it, though parser expects specific structure
+                # Parser: series = series_data[0]; title = series.get('title')
+                item_dict['series'] = [{'title': book.series, 'sequence': ''}]
+            
+            items_data.append(item_dict)
+            
+        library_data = {'items': items_data}
+        
+        # Process the library
+        stats = await audible_parser.process_library(
+            user_id=current_user.id,
+            library_data=library_data
+        )
+        
+        # Also update/create the AudibleAuth record to track "connected" status
+        # even though we don't have credentials
+        existing_auth = await db.execute(
+            select(AudibleAuth).where(AudibleAuth.user_id == current_user.id)
+        )
+        audible_auth = existing_auth.scalar_one_or_none()
+        
+        if not audible_auth:
+            # Create a placeholder auth record so "Status" shows connected
+            audible_auth = AudibleAuth(
+                user_id=current_user.id,
+                encrypted_token="extension_managed", # Placeholder
+                marketplace=import_request.marketplace,
+                device_name="Browser Extension",
+                last_sync_at=datetime.utcnow()
+            )
+            db.add(audible_auth)
+        else:
+            # Update sync time
+            audible_auth.last_sync_at = datetime.utcnow()
+            audible_auth.marketplace = import_request.marketplace
+            
+        await db.commit()
+        
+        return AudibleExtensionImportResponse(
+            success=True,
+            message=f"Successfully processed {len(import_request.books)} audiobooks",
+            imported=stats['imported'],
+            updated=stats['updated'],
+            skipped=stats['skipped'],
+            errors=stats['errors'],
+            total=len(import_request.books)
+        )
+        
+    except Exception as e:
+        logger.error(f"Extension import failed for user {current_user.id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "Import failed",
+                "detail": str(e)
+            }
+        )
+
+
+@router.get(
+    "/extension/status",
+    response_model=AudibleStatusResponse
+)
+async def get_extension_status(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get status specifically for the extension popup
+    """
+    return await get_audible_status(current_user, db)
 
 
 @router.post(

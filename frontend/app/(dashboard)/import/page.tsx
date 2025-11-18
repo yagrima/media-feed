@@ -8,8 +8,7 @@ import { Upload, ArrowLeft, FileText, CheckCircle2 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { useImport } from '@/lib/import-context'
 import { useRouter } from 'next/navigation'
-// import { ConnectAudibleModal } from '@/components/audible/connect-audible-modal'  // REMOVED: Backend auth failed
-// import { AudibleStatusCard } from '@/components/audible/audible-status-card'  // REMOVED: Backend auth failed
+import { AudibleExtensionCard } from '@/components/audible/audible-extension-card'
 import { useToast } from '@/hooks/use-toast'
 
 export default function ImportPage() {
@@ -383,7 +382,8 @@ export default function ImportPage() {
 
 
 
-      {/* Audible removed - pivoting to browser extension approach (see AUDIBLE_INTEGRATION_PIVOT.md) */}
+      {/* Audible Import Section */}
+      <AudibleExtensionCard />
     </div>
   )
 }
