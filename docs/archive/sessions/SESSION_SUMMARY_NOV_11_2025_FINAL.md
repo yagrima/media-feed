@@ -158,7 +158,7 @@
 **Backend Service:**
 - `SENTRY_DSN` = Backend DSN key
 - `ENVIRONMENT` = production
-- `TMDB_API_KEY` = v3 API key (e12b73358b4ea2e981180ac122b4b2a3)
+- `TMDB_API_KEY` = v3 API key ([REDACTED_API_KEY])
 
 **Frontend Service:**
 - `NEXT_PUBLIC_SENTRY_DSN` = Frontend DSN key
