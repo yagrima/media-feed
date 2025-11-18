@@ -140,8 +140,20 @@ function detectMarketplace() {
 async function scrapeAllPages() {
   console.log('Me Feed: Starting deep scrape of all pages...');
   
+  // Keep track of unique ASINs to prevent loops
+  const uniqueAsins = new Set();
+  let allBooks = [];
+  
   // 1. Scrape current page first
-  let allBooks = scrapeAudibleLibrary(document);
+  const firstPageBooks = scrapeAudibleLibrary(document);
+  
+  firstPageBooks.forEach(book => {
+    if (book.asin && !uniqueAsins.has(book.asin)) {
+      uniqueAsins.add(book.asin);
+      allBooks.push(book);
+    }
+  });
+  
   let currentPageDoc = document;
   let pageNum = 1;
   const MAX_PAGES = 100; // Safety limit
@@ -150,15 +162,23 @@ async function scrapeAllPages() {
   while (pageNum < MAX_PAGES) {
     // Find "Next" button
     // Selectors cover various Audible regions/layouts
-    const nextBtn = currentPageDoc.querySelector('.pagingElements .nextButton a, span.nextButton > a, a[title="Next Page"]');
+    // Added .bc-state-disabled check for button itself
+    const nextBtn = currentPageDoc.querySelector('.pagingElements .nextButton a:not(.bc-state-disabled), span.nextButton > a:not(.bc-state-disabled)');
     
-    // Stop if no next button or button is disabled
-    if (!nextBtn || !nextBtn.href || nextBtn.parentElement.classList.contains('bc-state-disabled')) {
+    // Stop if no next button or button's container is disabled
+    if (!nextBtn || !nextBtn.href || nextBtn.parentElement.classList.contains('bc-state-disabled') || nextBtn.classList.contains('bc-state-disabled')) {
       console.log('Me Feed: No next page found or reached end. Finishing.');
       break;
     }
     
     const nextUrl = nextBtn.href;
+    
+    // Prevent circular links (e.g. next button linking to current page)
+    if (nextUrl === window.location.href || nextUrl === '#' || nextUrl.includes('javascript:')) {
+       console.log('Me Feed: Next button links to current page. Stopping.');
+       break;
+    }
+
     console.log(`Me Feed: Fetching page ${pageNum + 1}...`);
     
     try {
@@ -179,12 +199,24 @@ async function scrapeAllPages() {
         break;
       }
       
-      console.log(`Me Feed: Found ${newBooks.length} books on page ${pageNum + 1}`);
-      allBooks = allBooks.concat(newBooks);
-      pageNum++;
+      // Deduplication check: If no NEW books are found on this page, we are likely looping
+      let newUniqueCount = 0;
+      newBooks.forEach(book => {
+        if (book.asin && !uniqueAsins.has(book.asin)) {
+          uniqueAsins.add(book.asin);
+          allBooks.push(book);
+          newUniqueCount++;
+        }
+      });
       
-      // Update badge with progress via background (optional, but nice)
-      // chrome.runtime.sendMessage({ action: 'updateProgress', count: allBooks.length });
+      console.log(`Me Feed: Found ${newBooks.length} books on page ${pageNum + 1} (${newUniqueCount} new)`);
+      
+      if (newUniqueCount === 0) {
+        console.warn(`Me Feed: Page ${pageNum + 1} contained only duplicate books. Assuming end of list. Stopping.`);
+        break;
+      }
+      
+      pageNum++;
       
     } catch (error) {
       console.error(`Me Feed: Error fetching page ${pageNum + 1}:`, error);
@@ -192,7 +224,7 @@ async function scrapeAllPages() {
     }
   }
   
-  console.log(`Me Feed: Total scrape complete. Found ${allBooks.length} books across ${pageNum} pages.`);
+  console.log(`Me Feed: Total scrape complete. Found ${allBooks.length} unique books across ${pageNum} pages.`);
   return allBooks;
 }
 
