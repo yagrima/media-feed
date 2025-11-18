@@ -94,14 +94,41 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
     // First pass: Identify series and standalone items
     rawItems.forEach(item => {
       // Check if it's an audiobook part of a series
-      if (item.media.type === 'audiobook' && item.media.media_metadata?.series?.title) {
-        const seriesTitle = item.media.media_metadata.series.title
-        if (!seriesMap.has(seriesTitle)) {
-          seriesMap.set(seriesTitle, [])
+      if (item.media.type === 'audiobook') {
+        let seriesTitle = item.media.media_metadata?.series?.title;
+        
+        // Fallback: Regex matching for common patterns if metadata is missing
+        if (!seriesTitle) {
+          const title = item.media.title;
+          // Match: "Title: Series Name, Book X" or "Title (Series Name X)"
+          // Heuristic: Look for content after colon or in parenthesis
+          const colonMatch = title.match(/^(.*?):\s+(.*?),?\s+Book\s+\d+$/i);
+          if (colonMatch) {
+             // This is risky, usually "Series: Title, Book X" or "Title: Series, Book X"
+             // Let's look for explicit "Book X" pattern
+             // Example: "Harry Potter and the Stone: Harry Potter, Book 1" -> Series: Harry Potter
+             // Example: "Survival Quest: Way of the Shaman 1" -> Series: Way of the Shaman
+             const bookMatch = title.match(/:\s+(.*?)[\s,]+(?:Book|Vol|Volume|Part)\.?\s*\d+/i);
+             if (bookMatch) seriesTitle = bookMatch[1].trim();
+          }
+          
+          if (!seriesTitle) {
+             // Example: "Title (Series Name 1)"
+             const parenMatch = title.match(/\(([^)]+?)\s+\d+\)/);
+             if (parenMatch) seriesTitle = parenMatch[1].trim();
+          }
         }
-        seriesMap.get(seriesTitle)?.push(item)
+
+        if (seriesTitle) {
+          if (!seriesMap.has(seriesTitle)) {
+            seriesMap.set(seriesTitle, [])
+          }
+          seriesMap.get(seriesTitle)?.push(item)
+        } else {
+          grouped.push({ type: 'item', data: item })
+        }
       } else {
-        // Standalone item
+        // Standalone item (movies, TV)
         grouped.push({ type: 'item', data: item })
       }
     })
