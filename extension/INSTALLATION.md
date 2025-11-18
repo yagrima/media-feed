@@ -59,9 +59,9 @@
    - UK: https://www.audible.co.uk/library
    - (Other marketplaces work too!)
 
-2. The extension will **automatically scrape** your library
+2. The extension will **automatically scrape** your library (all pages!)
 
-3. Within 2-3 seconds, books will **auto-sync** to Me Feed
+3. Within a few seconds (depending on library size), books will **auto-sync** to Me Feed
 
 4. You'll see a **desktop notification** when sync completes
 
@@ -130,11 +130,11 @@
 - URL must contain `/library` path
 - Make sure you're logged into Audible
 
-### No books detected / Library empty
-- Make sure your Audible library loaded completely (wait 3-5 seconds)
-- Try scrolling down to load more books (if you have 100+ books)
-- Try manual sync from extension popup
-- Check browser console (F12) for scraping errors
+### No books detected / Only first page loaded
+- **Pagination Support:** The extension now automatically fetches all pages.
+- If it stops early, ensure you can see the "Next" button on the page.
+- Check browser console (F12) for "Me Feed: Error fetching page" messages.
+- Try manual sync from extension popup.
 
 ### Sync fails with 401 error
 - Your auth token expired or is invalid

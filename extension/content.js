@@ -5,9 +5,10 @@ console.log('Me Feed: Content script loaded on Audible library page');
 
 /**
  * Scrape audiobook data from Audible library page
+ * @param {Document} doc - The document object to scrape (defaults to current document)
  * @returns {Array} Array of book objects
  */
-function scrapeAudibleLibrary() {
+function scrapeAudibleLibrary(doc = document) {
   console.log('Me Feed: Starting library scrape...');
   
   const books = [];
@@ -15,7 +16,7 @@ function scrapeAudibleLibrary() {
   
   // Audible library uses different selectors depending on the marketplace
   // More specific: only get actual library item containers
-  const bookElements = document.querySelectorAll('li.productListItem, .adbl-library-content-row');
+  const bookElements = doc.querySelectorAll('li.productListItem, .adbl-library-content-row');
   
   console.log(`Me Feed: Found ${bookElements.length} potential book elements`);
   
@@ -133,6 +134,69 @@ function detectMarketplace() {
 }
 
 /**
+ * Scrape all pages by following pagination
+ * @returns {Promise<Array>} All books from all pages
+ */
+async function scrapeAllPages() {
+  console.log('Me Feed: Starting deep scrape of all pages...');
+  
+  // 1. Scrape current page first
+  let allBooks = scrapeAudibleLibrary(document);
+  let currentPageDoc = document;
+  let pageNum = 1;
+  const MAX_PAGES = 100; // Safety limit
+  
+  // 2. Loop through pagination
+  while (pageNum < MAX_PAGES) {
+    // Find "Next" button
+    // Selectors cover various Audible regions/layouts
+    const nextBtn = currentPageDoc.querySelector('.pagingElements .nextButton a, span.nextButton > a, a[title="Next Page"]');
+    
+    // Stop if no next button or button is disabled
+    if (!nextBtn || !nextBtn.href || nextBtn.parentElement.classList.contains('bc-state-disabled')) {
+      console.log('Me Feed: No next page found or reached end. Finishing.');
+      break;
+    }
+    
+    const nextUrl = nextBtn.href;
+    console.log(`Me Feed: Fetching page ${pageNum + 1}...`);
+    
+    try {
+      // Add delay to be polite to Audible servers (1s)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const response = await fetch(nextUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const text = await response.text();
+      const parser = new DOMParser();
+      currentPageDoc = parser.parseFromString(text, 'text/html');
+      
+      const newBooks = scrapeAudibleLibrary(currentPageDoc);
+      
+      if (newBooks.length === 0) {
+        console.warn(`Me Feed: Page ${pageNum + 1} loaded but no books found. Stopping.`);
+        break;
+      }
+      
+      console.log(`Me Feed: Found ${newBooks.length} books on page ${pageNum + 1}`);
+      allBooks = allBooks.concat(newBooks);
+      pageNum++;
+      
+      // Update badge with progress via background (optional, but nice)
+      // chrome.runtime.sendMessage({ action: 'updateProgress', count: allBooks.length });
+      
+    } catch (error) {
+      console.error(`Me Feed: Error fetching page ${pageNum + 1}:`, error);
+      break;
+    }
+  }
+  
+  console.log(`Me Feed: Total scrape complete. Found ${allBooks.length} books across ${pageNum} pages.`);
+  return allBooks;
+}
+
+/**
  * Auto-scrape when page is loaded
  */
 function autoScrape() {
@@ -144,29 +208,34 @@ function autoScrape() {
   }
 }
 
-function performScrape() {
+async function performScrape() {
   console.log('Me Feed: Page loaded, starting auto-scrape...');
   
   // Wait a bit for dynamic content to render
-  setTimeout(() => {
-    const books = scrapeAudibleLibrary();
-    const marketplace = detectMarketplace();
-    
-    if (books.length > 0) {
-      // Send to background script for syncing
-      chrome.runtime.sendMessage({
-        action: 'libraryScraped',
-        books,
-        marketplace
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Me Feed: Error sending message:', chrome.runtime.lastError);
-        } else {
-          console.log('Me Feed: Message sent to background script', response);
-        }
-      });
-    } else {
-      console.warn('Me Feed: No books found on page');
+  setTimeout(async () => {
+    try {
+      // Use deep scrape to get all pages
+      const books = await scrapeAllPages();
+      const marketplace = detectMarketplace();
+      
+      if (books.length > 0) {
+        // Send to background script for syncing
+        chrome.runtime.sendMessage({
+          action: 'libraryScraped',
+          books,
+          marketplace
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Me Feed: Error sending message:', chrome.runtime.lastError);
+          } else {
+            console.log('Me Feed: Message sent to background script', response);
+          }
+        });
+      } else {
+        console.warn('Me Feed: No books found on page');
+      }
+    } catch (e) {
+      console.error('Me Feed: Auto-scrape failed', e);
     }
   }, 2000); // 2 second delay for page to fully render
 }
@@ -178,9 +247,13 @@ autoScrape();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'manualScrape') {
     console.log('Me Feed: Manual scrape requested');
-    const books = scrapeAudibleLibrary();
-    const marketplace = detectMarketplace();
-    sendResponse({ books, marketplace });
+    
+    // Must return true to keep channel open for async response
+    scrapeAllPages().then(books => {
+      const marketplace = detectMarketplace();
+      sendResponse({ books, marketplace });
+    });
+    
+    return true; 
   }
-  return true; // Keep channel open for async response
 });
