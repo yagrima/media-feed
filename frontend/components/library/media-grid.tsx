@@ -217,8 +217,8 @@ export function MediaGrid({ filters, viewMode }: MediaGridProps) {
        // We need to reconstruct grouped array
        if (newSeriesMap.size > 0) {
           // Filter out moved items
-          const filteredGrouped = grouped.filter((_, idx) => 
-             !(grouped[_].type === 'item' && grouped[_].data.media.type === 'audiobook' && itemsToRemove.has(idx))
+          const filteredGrouped = grouped.filter((groupItem, idx) => 
+             !(groupItem.type === 'item' && groupItem.data.media.type === 'audiobook' && itemsToRemove.has(idx))
           );
           
           // Add new groups
